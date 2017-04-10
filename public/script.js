@@ -24,15 +24,212 @@ document.body.appendChild(renderer.view);
 
 
 /* -------------- BEGIN game variables -------------- */
-// player
+// current level
+var level = 0;
+// main player sprite
 var player;
+// text sprite displayed to the user
+var message;
+// list of obstacles blocking the player
+var obstacles = [];
+// keeps track of the game state
+var gameOver = true;
 
 // keep track of key presses
 var keyPressed = [];
 /* -------------- END game variables -------------- */
 
 
+/* -------------- BEGIN constants -------------- */
+// keycodes
+var WCODE = 87;
+var ACODE = 65;
+var SCODE = 83;
+var DCODE = 68;
+var SPACE = 32;
+
+// player movement
+var MAXVEL = 5;
+var MINVEL = -5;
+var ACCELERATION = 0.5;
+var DECELERATION = 0.25;
+/* -------------- END constants -------------- */
+
+
+/* -------------- BEGIN functions -------------- */
+function start() {
+	console.log("Starting main menu");
+
+	// show main menu "press space to play"
+	createText("Press space to play");
+
+	// set game state to over 
+	// waiting at the menu is not playing
+	gameOver = true;
+
+	// kick off game loop
+	gameLoop();
+}
+
+function gameLoop() {
+	// loop the game 60 times a second
+	requestAnimationFrame(gameLoop);
+
+	// handles user input
+	play();
+
+	// renders the content on the screen
+	renderer.render(stage);
+}
+
+function play() {
+	// game is over, waiting for user to press space to play again
+	if (gameOver) {
+		// start the game over
+		if (keyPressed[SPACE]) {
+			// start level 1
+			startGame();
+		}
+	// game is not over, continue letting user move the player
+	} else {
+		// handle player movement
+		updatePlayer();
+	}
+}
+
+function clearScreen() {
+	// remove message and player
+	stage.removeChild(message);
+	stage.removeChild(player);
+
+	// remove all obstacles
+	obstacles.forEach(function(obstacle) {
+		stage.removeChild(obstacle);
+	});
+	obstacles = [];
+}
+
+function createPlayer() {
+	console.log("creating player");
+	player = new Sprite(loader.resources["img/pigeon.png"].texture);
+
+	// creates player values
+	player.xv = 0;
+	player.yv = 0;
+
+	// player size
+	player.width = 100;
+	player.height = 125;
+
+	// makes player center in middle of image
+	player.anchor.x = 0.5;
+	player.anchor.y = 0.5;
+
+	// sets player's position
+	player.x = renderer.width / 2;
+	player.y = renderer.height / 2;
+
+	// adds player to the stage
+	stage.addChild(player);
+}
+
+function startGame() {
+	console.log("Starting game at level 1");
+
+	// clears the screen
+	clearScreen();
+
+	// creates the player
+	createPlayer();
+
+	// updates the game state
+	gameOver = false;
+
+	// starts at level 1
+	level = 1;
+}
+
+function updatePlayer() {
+	// W
+	if (keyPressed[WCODE]) {
+		// accelerate in the negative y direction
+		if (player.yv > MINVEL) {
+			player.yv -= ACCELERATION;
+		}
+	} else {
+		// opposite key wasn't pressed, we slow down
+		if (!keyPressed[SCODE] && player.yv < 0) {
+			player.yv += DECELERATION;
+		}
+	}
+
+	// A
+	if (keyPressed[ACODE]) {
+		// accelerate in the negative x direction
+		if (player.xv > MINVEL) {
+			player.xv -= ACCELERATION;
+		}
+	} else {
+		// opposite key wasn't pressed, we slow down
+		if (!keyPressed[DCODE] && player.xv < 0) {
+			player.xv += DECELERATION;
+		}
+	}
+
+	// S
+	if (keyPressed[SCODE]) {
+		// accelerate in the positive y direction
+		if (player.yv < MAXVEL) {
+			player.yv += ACCELERATION;
+		}
+	} else {
+		// opposite key wasn't pressed, we slow down
+		if (!keyPressed[WCODE] && player.yv > 0) {
+			player.yv -= DECELERATION;
+		}
+	}
+
+	// D
+	if (keyPressed[DCODE]) {
+		// accelerate in the positive x direction
+		if (player.xv < MAXVEL) {
+			player.xv += ACCELERATION;
+		}
+	} else {
+		// opposite key wasn't pressed, we slow down
+		if (!keyPressed[ACODE] && player.xv > 0) {
+			player.xv -= DECELERATION;
+		}
+	}
+
+	// updates velocities
+	player.x += player.xv;
+	player.y += player.yv;
+}
+
+// utility functions
+
+function createText(s) {
+	// take a string and display it on the screen
+	message = new Text(s, {fontFamily: "Arial", fontSize: 64, fill: "white"});
+	
+	// set text anchor to its center
+	message.anchor.x = 0.5;
+	message.anchor.y = 0.5;
+
+	// set text position
+	message.x = renderer.width / 2;
+	message.y = renderer.height / 2;
+
+	// add message to the stage
+	stage.addChild(message);
+}
+/* -------------- END functions -------------- */
+
+
 /* -------------- BEGIN main menu -------------- */
+
+
 var mainMenu = {
 	playing : false,
 	message : "",
@@ -87,10 +284,6 @@ var mainMenu = {
 		}
 	}
 }
-/* -------------- END main menu -------------- */
-
-
-/* -------------- BEGIN end game -------------- */
 var gameOverMenu = {
 	playing : false,
 	message : "",
@@ -146,10 +339,6 @@ var gameOverMenu = {
 		}
 	}
 }
-/* -------------- END end game -------------- */
-
-
-/* -------------- BEGIN level 1 -------------- */
 var level1 = {
 	playing : false,
 	obstacles : [],
@@ -385,6 +574,7 @@ var level1 = {
 	}
 
 }
+
 /* -------------- END level 1 -------------- */
 
 function hitTestRectangle(r1, r2) {
@@ -443,7 +633,7 @@ function hitTestRectangle(r1, r2) {
 loader
 	.add(["img/pigeon.png", "img/eagle.png"])
 	.on("progress", loadProgressHandler)
-	.load(mainMenu.setup);
+	.load(start);
 
 
 // progress handler
