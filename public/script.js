@@ -5,10 +5,11 @@ var Container = PIXI.Container,
 	loader = PIXI.loader,
 	resources = PIXI.loader.resources,
 	Sprite = PIXI.Sprite,
+	Graphics = PIXI.Graphics,
 	Text = PIXI.Text;
 
 // create the renderer
-var renderer = autoDetectRenderer(800, 600, {backgroundColor : 0x1099bb});
+var renderer = autoDetectRenderer(800, 600, {backgroundColor : 0x808b96});
 renderer.view.style.position = "absolute";
 renderer.view.style.display = "block";
 renderer.autoResize = true;
@@ -35,6 +36,9 @@ var obstacles = [];
 // keeps track of the game state
 var gameOver = true;
 
+// number of obstacles to dodge per level
+var obstacleLimit = [50];
+
 // keep track of key presses
 var keyPressed = [];
 /* -------------- END game variables -------------- */
@@ -57,7 +61,7 @@ var DECELERATION = 0.25;
 
 
 /* -------------- BEGIN functions -------------- */
-function start() {
+function setup() {
 	console.log("Starting main menu");
 
 	// show main menu "press space to play"
@@ -110,26 +114,23 @@ function clearScreen() {
 }
 
 function createPlayer() {
-	console.log("creating player");
-	player = new Sprite(loader.resources["img/pigeon.png"].texture);
+	// makes player a red squares
+	player = new Graphics();
 
-	// creates player values
-	player.xv = 0;
-	player.yv = 0;
+	// fills in the color
+	player.beginFill(0xC0392B);
+	player.drawRect(0, 0, 64, 64);
+	player.endFill();
 
-	// player size
-	player.width = 100;
-	player.height = 125;
-
-	// makes player center in middle of image
-	player.anchor.x = 0.5;
-	player.anchor.y = 0.5;
-
-	// sets player's position
+	// puts player in the middle of the screen
 	player.x = renderer.width / 2;
 	player.y = renderer.height / 2;
 
-	// adds player to the stage
+	// player begins stationary
+	player.xv = 0;
+	player.yv = 0;
+
+	// add player to screen
 	stage.addChild(player);
 }
 
@@ -142,11 +143,11 @@ function startGame() {
 	// creates the player
 	createPlayer();
 
-	// updates the game state
-	gameOver = false;
-
 	// starts at level 1
 	level = 1;
+
+	// updates the game state
+	gameOver = false;
 }
 
 function updatePlayer() {
@@ -224,6 +225,77 @@ function createText(s) {
 	// add message to the stage
 	stage.addChild(message);
 }
+
+function hitTestRectangle(r1, r2) {
+	//Define the variables we'll need to calculate
+	var hit, combinedHalfWidths, combinedHalfHeights, vx, vy;
+
+	//hit will determine whether there's a collision
+	hit = false;
+
+	//Find the center points of each sprite
+	r1.centerX = r1.x + r1.width / 2;
+	r1.centerY = r1.y + r1.height / 2;
+	r2.centerX = r2.x + r2.width / 2;
+	r2.centerY = r2.y + r2.height / 2;
+
+	//Find the half-widths and half-heights of each sprite
+	r1.halfWidth = r1.width / 2;
+	r1.halfHeight = r1.height / 2;
+	r2.halfWidth = r2.width / 2;
+	r2.halfHeight = r2.height / 2;
+
+	//Calculate the distance vector between the sprites
+	vx = r1.centerX - r2.centerX;
+	vy = r1.centerY - r2.centerY;
+
+	//Figure out the combined half-widths and half-heights
+	combinedHalfWidths = r1.halfWidth + r2.halfWidth;
+	combinedHalfHeights = r1.halfHeight + r2.halfHeight;
+
+	//Check for a collision on the x axis
+	if (Math.abs(vx) < combinedHalfWidths) {
+		//A collision might be occuring. Check for a collision on the y axis
+		if (Math.abs(vy) < combinedHalfHeights) {
+			//There's definitely a collision happening
+			hit = true;
+		} else {
+			// There's no collision on the y axis
+			hit = false;
+		}
+	} else {
+		// There's no collision on the x axis
+		hit = false;
+	}
+
+	//`hit` will be either `true` or `false`
+	return hit;
+}
+
+// progress handler
+function loadProgressHandler(loader, resource) {
+	// display file url being loaded
+	console.log("loading: " + resource.url);
+
+	// display percentage of files loaded
+	console.log("progress: " + loader.progress + "%");
+}
+
+// key up
+window.onkeyup = function(e) {
+	keyPressed[e.keyCode] = false;
+}
+
+// key down
+window.onkeydown = function(e) {
+	keyPressed[e.keyCode] = true;
+}
+
+// load images and starts the game
+loader
+	.add(["img/pigeon.png", "img/eagle.png"])
+	.on("progress", loadProgressHandler)
+	.load(setup);
 /* -------------- END functions -------------- */
 
 
@@ -577,83 +649,7 @@ var level1 = {
 
 /* -------------- END level 1 -------------- */
 
-function hitTestRectangle(r1, r2) {
 
-  //Define the variables we'll need to calculate
-  var hit, combinedHalfWidths, combinedHalfHeights, vx, vy;
-
-  //hit will determine whether there's a collision
-  hit = false;
-
-  //Find the center points of each sprite
-  r1.centerX = r1.x + r1.width / 2;
-  r1.centerY = r1.y + r1.height / 2;
-  r2.centerX = r2.x + r2.width / 2;
-  r2.centerY = r2.y + r2.height / 2;
-
-  //Find the half-widths and half-heights of each sprite
-  r1.halfWidth = r1.width / 2;
-  r1.halfHeight = r1.height / 2;
-  r2.halfWidth = r2.width / 2;
-  r2.halfHeight = r2.height / 2;
-
-  //Calculate the distance vector between the sprites
-  vx = r1.centerX - r2.centerX;
-  vy = r1.centerY - r2.centerY;
-
-  //Figure out the combined half-widths and half-heights
-  combinedHalfWidths = r1.halfWidth + r2.halfWidth;
-  combinedHalfHeights = r1.halfHeight + r2.halfHeight;
-
-  //Check for a collision on the x axis
-  if (Math.abs(vx) < combinedHalfWidths) {
-
-    //A collision might be occuring. Check for a collision on the y axis
-    if (Math.abs(vy) < combinedHalfHeights) {
-
-      //There's definitely a collision happening
-      hit = true;
-    } else {
-
-      //There's no collision on the y axis
-      hit = false;
-    }
-  } else {
-
-    //There's no collision on the x axis
-    hit = false;
-  }
-
-  //`hit` will be either `true` or `false`
-  return hit;
-};
-
-
-// load images and starts the game
-loader
-	.add(["img/pigeon.png", "img/eagle.png"])
-	.on("progress", loadProgressHandler)
-	.load(start);
-
-
-// progress handler
-function loadProgressHandler(loader, resource) {
-	// display file url being loaded
-	console.log("loading: " + resource.url);
-
-	// display percentage of files loaded
-	console.log("progress: " + loader.progress + "%");
-}
-
-// key up
-window.onkeyup = function(e) {
-	keyPressed[e.keyCode] = false;
-}
-
-// key down
-window.onkeydown = function(e) {
-	keyPressed[e.keyCode] = true;
-}
 
 //onmousemove = function(e) {
 //	if (level1.playing) {
