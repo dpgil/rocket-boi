@@ -154,6 +154,8 @@ var level1 = {
 	playing : false,
 	obstacles : [],
 	message : "",
+	velInc : 0.5,
+	velDec : 0.25,
 	setup : function() {
 		console.log("Starting level 1");
 
@@ -227,7 +229,9 @@ var level1 = {
 		);
 
 		// preset movement values
-		player.speed = 5;
+		player.maxspeed = 5;
+		player.xvel = 0;
+		player.yvel = 0;
 		player.angularV = 0.1;
 
 		// movement functions
@@ -272,20 +276,52 @@ var level1 = {
 	play : function() {
 		// w
 		if (keyPressed[87]) {
-			player.moveUp();
+			//player.moveUp();
+			if (player.yvel > -5) {
+				player.yvel -= level1.velInc;
+			}
+		} else {
+			// slowing down because the key was let go of
+			if (!keyPressed[83] && player.yvel < 0) {
+				player.yvel += level1.velDec;
+			}
 		}
 		// a
 		if (keyPressed[65]) {
-			player.moveLeft();
+			//player.moveLeft();
+			if (player.xvel > -5) {
+				player.xvel -= level1.velInc;
+			} 
+		} else {
+			if (!keyPressed[68] && player.xvel < 0) {
+				player.xvel += level1.velDec;
+			}
 		}
 		// s
 		if (keyPressed[83]) {
-			player.moveDown();
+			//player.moveDown();
+			if (player.yvel < 5) {
+				player.yvel += level1.velInc;
+			}
+		} else {
+			if (!keyPressed[87] && player.yvel > 0) {
+				player.yvel -= level1.velDec;
+			}
 		}
 		// d
 		if (keyPressed[68]) {
-			player.moveRight();
+			//player.moveRight();
+			if (player.xvel < 5) {
+				player.xvel += level1.velInc;
+			}
+		} else {
+			if (!keyPressed[65] && player.xvel > 0) {
+				player.xvel -= level1.velDec;
+			}
 		}
+
+		player.x += player.xvel;
+		player.y += player.yvel;
 	},
 	gameOver : function() {
 		level1.playing = false;
