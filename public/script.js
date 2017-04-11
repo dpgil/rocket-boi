@@ -234,6 +234,8 @@ function updateObstacles() {
 }
 
 function updatePlayer() {
+	// updates velocities based on our accel/deceleration values
+	// so the player's movement is smoother
 	// W
 	if (keyPressed[WCODE]) {
 		// accelerate in the negative y direction
@@ -286,9 +288,40 @@ function updatePlayer() {
 		}
 	}
 
-	// updates velocities
+	// updates position
 	player.x += player.xv;
 	player.y += player.yv;
+
+	// maintains bounds
+	maintainPlayerBounds();
+}
+
+function maintainPlayerBounds() {
+	// keeps player inside the game screen. resets its velocity if it hits a wall
+
+	// player tries to leave from the top
+	if (player.y < 0) {
+		player.y = 0;
+		player.yv = 0;
+	}
+
+	// player tries to leave from the left
+	if (player.x < 0) {
+		player.x = 0;
+		player.xv = 0;
+	}
+
+	// player tries to leave from the bottom
+	if (player.y > renderer.height - player.height) {
+		player.y = renderer.height - player.height;
+		player.yv = 0;
+	}
+
+	// player tries to leave from the right
+	if (player.x > renderer.width - player.width) {
+		player.x = renderer.width - player.width;
+		player.xv = 0;
+	}
 }
 
 function createText(s) {
