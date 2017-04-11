@@ -20,7 +20,6 @@ var stage = new Container();
 
 // add canvas to the html
 document.body.appendChild(renderer.view);
-
 /* -------------- END sets up stage and game rendering -------------- */
 
 
@@ -208,17 +207,25 @@ function endGame() {
 	createText("Game over! Press space to play again");
 }
 
+function obstacleOutOfRange(obstacle) {
+	return obstacle.y + obstacle.radius < 0;
+}
+
+function removeObstacle(obstacle) {
+	// removes obstacle from our internal list and from the screen
+	var index = obstacles.indexOf(obstacle);
+	obstacles.splice(index, 1);
+	stage.removeChild(obstacle);
+}
+
 function updateObstacles() {
 	obstacles.forEach(function(obstacle) {
 		if (hitTestRectCircle(player, obstacle)) {
 			// player hit an obstacle
 			endGame();
-		} else if (obstacle.y < 0) {
+		} else if (obstacleOutOfRange(obstacle)) {
 			// obstacle has left the screen, remove it
-			// from our list and the screen
-			var index = obstacles.indexOf(obstacle);
-			obstacles.splice(index,1);
-			stage.removeChild(obstacle);
+			removeObstacle(obstacle);
 		} else {
 			// nothing wrong, continue moving the obstacle
 			obstacle.moveUp();
