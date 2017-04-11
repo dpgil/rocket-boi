@@ -142,9 +142,12 @@ function createObstacle() {
 	// creates the graphics object
 	var obstacle = new Graphics();
 
+	// initializes obstacle radius
+	obstacle.radius = 64;
+
 	// fills in the color
 	obstacle.beginFill(0xF4D03F);
-	obstacle.drawCircle(0, 0, 32);
+	obstacle.drawCircle(0, 0, obstacle.radius);//32);
 	obstacle.endFill();
 
 	// sets obstacle position to random x
@@ -173,7 +176,7 @@ function spawnObstacle() {
 		createObstacle();
 
 		// spawns another obstacle in a random time
-		var rand = Math.floor(Math.random() * (1000) + 500);
+		var rand = Math.floor(Math.random() * (500) + 200);//(1000) + 500);
 		setTimeout(spawnObstacle, rand);
 	}
 }
@@ -207,7 +210,7 @@ function endGame() {
 
 function updateObstacles() {
 	obstacles.forEach(function(obstacle) {
-		if (hitTestRectangle(player, obstacle)) {
+		if (hitTestRectCircle(player, obstacle)) {
 			// player hit an obstacle
 			endGame();
 		} else if (obstacle.y < 0) {
@@ -295,6 +298,35 @@ function createText(s) {
 
 	// add message to the stage
 	stage.addChild(message);
+}
+
+function hitTestRectCircle(r, c) {
+	// determines if a rectangle and circle are intersecting
+	// i.e. center of circle is within one radius away from rect edges
+
+	// finds the center of the rectangle and circle
+	var rx = r.x + r.width / 2;
+	var ry = r.y + r.height / 2;
+	var cx = c.x;
+	var cy = c.y;
+
+	// circle distance x and y
+	var cdx = Math.abs(cx - rx);
+	var cdy = Math.abs(cy - ry);
+
+	// circle center is farther than half the rect + circle radius from rect center
+	if (cdx > (r.width / 2 + c.radius)) { return false; }
+	if (cdy > (r.height / 2 + c.radius)) { return false; }
+
+	// circle center is inside rectangle
+	if (cdx <= (r.width / 2)) { return true; }
+	if (cdy <= (r.height / 2)) { return true; }
+
+	// finds the distance between the circle center and the 
+	// rectangle corner and checks if it is less than the radius
+	corner_sq = Math.pow(cdx - r.width / 2, 2) + Math.pow(cdy - r.height / 2, 2);
+	return corner_sq <= Math.pow(c.radius, 2);
+
 }
 
 function hitTestRectangle(r1, r2) {
