@@ -72,10 +72,6 @@ function setup() {
 	// show main menu "press space to play"
 	createText("Press space to play");
 
-	// creates lives left text sprite
-	createLifeMessage();
-
-
 	// set game state to over 
 	// waiting at the menu is not playing
 	gameOver = true;
@@ -119,6 +115,7 @@ function play() {
 function clearScreen() {
 	// remove message and player
 	stage.removeChild(message);
+	stage.removeChild(lifeMessage);
 	stage.removeChild(player);
 
 	clearObstacles();
@@ -224,7 +221,7 @@ function startGame() {
 	lives = 3;
 
 	// adds or updates the life message sprite
-	updateLifeMessage();
+	createLifeMessage();
 
 	// updates the game state
 	gameOver = false;
