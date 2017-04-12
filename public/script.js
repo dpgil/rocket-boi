@@ -31,7 +31,9 @@ var lives = 3;
 // main player sprite
 var player;
 // text sprite displayed to the user
-var message;
+var message = "";
+// text sprite handling user lives
+var lifeMessage = "";
 // list of obstacles blocking the player
 var obstacles = [];
 // keeps track of the game state
@@ -69,6 +71,10 @@ function setup() {
 
 	// show main menu "press space to play"
 	createText("Press space to play");
+
+	// creates lives left text sprite
+	createLifeMessage();
+
 
 	// set game state to over 
 	// waiting at the menu is not playing
@@ -182,6 +188,26 @@ function spawnObstacle() {
 	}
 }
 
+function createLifeMessage() {
+	// creates the text sprite
+	lifeMessage = new Text("Lives: 3", 
+		{fontFamily: "Arial", 
+		fontSize: 32, 
+		fill: "white"}
+	);
+
+	// set text position
+	lifeMessage.x = 7;
+	lifeMessage.y = 7;
+
+	// adds it to the stage
+	stage.addChild(lifeMessage);
+}
+
+function updateLifeMessage() {
+	lifeMessage.text = "Lives: " + lives;
+}
+
 function startGame() {
 	console.log("Starting game at level 1");
 
@@ -196,6 +222,9 @@ function startGame() {
 
 	// starts with 3 lives
 	lives = 3;
+
+	// adds or updates the life message sprite
+	updateLifeMessage();
 
 	// updates the game state
 	gameOver = false;
@@ -216,18 +245,21 @@ function endGame() {
 function loseLife() {
 	lives -= 1;
 	recentlyLostLife = true;
+	updateLifeMessage();
 
 	// out of lives, game over
 	if (lives === 0) {
 		endGame();
 	} else {
 		// clear all the current obstacles on the screen
-		setTimeout(clearObstacles, 1000);
-		setTimeout(function() {
-			recentlyLostLife = false;
-		}, 1000);
-		setTimeout(spawnObstacle, 1000);
+		setTimeout(restartLife, 1500);
 	}
+}
+
+function restartLife() {
+	clearObstacles();
+	recentlyLostLife = false;
+	spawnObstacle();
 }
 
 function obstacleOutOfRange(obstacle) {
