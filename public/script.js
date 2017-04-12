@@ -26,6 +26,8 @@ document.body.appendChild(renderer.view);
 /* -------------- BEGIN game variables -------------- */
 // current level
 var level = 0;
+// lives left
+var lives = 3;
 // main player sprite
 var player;
 // text sprite displayed to the user
@@ -34,6 +36,8 @@ var message;
 var obstacles = [];
 // keeps track of the game state
 var gameOver = true;
+// keeps track of recently lost life
+var recentlyLostLife = false;
 
 // number of obstacles to dodge per level
 var obstacleLimit = [50];
@@ -96,11 +100,13 @@ function play() {
 		}
 	// game is not over, continue letting user move the player
 	} else {
-		// handle player movement
-		updatePlayer();
+		if (!recentlyLostLife) {
+			// handle player movement
+			updatePlayer();
 
-		// move obstacles
-		updateObstacles();
+			// move obstacles
+			updateObstacles();
+		}
 	}
 }
 
@@ -109,11 +115,7 @@ function clearScreen() {
 	stage.removeChild(message);
 	stage.removeChild(player);
 
-	// remove all obstacles
-	obstacles.forEach(function(obstacle) {
-		stage.removeChild(obstacle);
-	});
-	obstacles = [];
+	clearObstacles();
 }
 
 function createPlayer() {
@@ -170,7 +172,7 @@ function createObstacle() {
 function spawnObstacle() {
 	// if the game ends, but set timeout is still going to call this function
 	// we want to ignore it so obstacles aren't added after the game ends
-	if (!gameOver) {
+	if (!gameOver && !recentlyLostLife) {
 		// creates and adds an obstacle to the screen
 		createObstacle();
 
@@ -192,8 +194,12 @@ function startGame() {
 	// starts at level 1
 	level = 1;
 
+	// starts with 3 lives
+	lives = 3;
+
 	// updates the game state
 	gameOver = false;
+	recentlyLostLife = false;
 
 	// begins spawning obstacles in 1 sec
 	setTimeout(spawnObstacle, 1000);
@@ -207,6 +213,23 @@ function endGame() {
 	createText("Game over! Press space to play again");
 }
 
+function loseLife() {
+	lives -= 1;
+	recentlyLostLife = true;
+
+	// out of lives, game over
+	if (lives === 0) {
+		endGame();
+	} else {
+		// clear all the current obstacles on the screen
+		setTimeout(clearObstacles, 1000);
+		setTimeout(function() {
+			recentlyLostLife = false;
+		}, 1000);
+		setTimeout(spawnObstacle, 1000);
+	}
+}
+
 function obstacleOutOfRange(obstacle) {
 	return obstacle.y + obstacle.radius < 0;
 }
@@ -218,11 +241,18 @@ function removeObstacle(obstacle) {
 	stage.removeChild(obstacle);
 }
 
+function clearObstacles() {
+	obstacles.forEach(function(obstacle) {
+		stage.removeChild(obstacle);
+	});
+	obstacles = [];
+}
+
 function updateObstacles() {
 	obstacles.forEach(function(obstacle) {
 		if (hitTestRectCircle(player, obstacle)) {
 			// player hit an obstacle
-			endGame();
+			loseLife();
 		} else if (obstacleOutOfRange(obstacle)) {
 			// obstacle has left the screen, remove it
 			removeObstacle(obstacle);
@@ -335,7 +365,6 @@ function createText(s) {
 		align: "center"}
 	);
 	
-	//message.style = {wordWrap: true, wordWrapWidth: renderer.width};
 	// set text anchor to its center
 	message.anchor.x = 0.5;
 	message.anchor.y = 0.5;
