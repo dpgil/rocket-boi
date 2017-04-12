@@ -154,13 +154,13 @@ function createObstacle() {
 
 	// fills in the color
 	obstacle.beginFill(0xF4D03F);
-	obstacle.drawCircle(0, 0, obstacle.radius);//32);
+	obstacle.drawCircle(0, 0, obstacle.radius);
 	obstacle.endFill();
 
 	// sets obstacle position to random x
 	var rx = Math.floor(Math.random() * renderer.width);
 	obstacle.x = rx;
-	obstacle.y = renderer.height; // + obstacle.height
+	obstacle.y = renderer.height + obstacle.radius;
 
 	// adds obstacle movement
 	obstacle.speed = MAXVEL;
@@ -183,7 +183,7 @@ function spawnObstacle() {
 		createObstacle();
 
 		// spawns another obstacle in a random time
-		var rand = Math.floor(Math.random() * (500) + 200);//(1000) + 500);
+		var rand = Math.floor(Math.random() * (500) + 200);
 		setTimeout(spawnObstacle, rand);
 	}
 }
