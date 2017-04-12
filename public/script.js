@@ -326,8 +326,16 @@ function maintainPlayerBounds() {
 
 function createText(s) {
 	// take a string and display it on the screen
-	message = new Text(s, {fontFamily: "Arial", fontSize: 64, fill: "white"});
+	message = new Text(s, 
+		{fontFamily: "Arial", 
+		fontSize: 64, 
+		fill: "white", 
+		wordWrap: true, 
+		wordWrapWidth: renderer.width, 
+		align: "center"}
+	);
 	
+	//message.style = {wordWrap: true, wordWrapWidth: renderer.width};
 	// set text anchor to its center
 	message.anchor.x = 0.5;
 	message.anchor.y = 0.5;
