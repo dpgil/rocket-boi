@@ -131,12 +131,7 @@ function createPlayer() {
 	player.endFill();
 
 	// puts player in the middle of the screen
-	player.x = renderer.width / 2;
-	player.y = renderer.height / 2;
-
-	// player begins stationary
-	player.xv = 0;
-	player.yv = 0;
+	resetPlayer();
 
 	// add player to screen
 	stage.addChild(player);
@@ -253,8 +248,19 @@ function loseLife() {
 	}
 }
 
+function resetPlayer() {
+	player.x = renderer.width / 2;
+	player.y = renderer.height / 2;
+
+	player.xv = 0;
+	player.yv = 0;
+}
+
 function restartLife() {
 	clearObstacles();
+
+	resetPlayer();
+
 	recentlyLostLife = false;
 	spawnObstacle();
 }
