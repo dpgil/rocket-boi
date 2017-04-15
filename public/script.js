@@ -6,7 +6,8 @@ var Container = PIXI.Container,
 	resources = PIXI.loader.resources,
 	Sprite = PIXI.Sprite,
 	Graphics = PIXI.Graphics,
-	Text = PIXI.Text;
+	Text = PIXI.Text,
+	utils = PIXI.utils;
 
 // create the renderer
 var renderer = autoDetectRenderer(800, 600, {backgroundColor : 0x0a3e74});//0x195087});//0x808b96});
@@ -35,6 +36,8 @@ var lives = 3;
 var player;
 // text sprite displayed to the user
 var message = "";
+// main menu start button
+var startButton;
 // text sprite handling user lives
 var lifeMessage = "";
 // list of obstacles blocking the player
@@ -73,7 +76,8 @@ function setup() {
 	console.log("Starting main menu");
 
 	// show main menu "press space to play"
-	createText("Press space to play");
+	//createText("Press space to play");
+	addMainMenuButtons();
 
 	// set game state to over 
 	// waiting at the menu is not playing
@@ -82,6 +86,36 @@ function setup() {
 	// kick off game loop
 	gameLoop();
 	//setInterval(gameLoop, 10);
+}
+
+function addMainMenuButtons() {
+
+	//Create an alias for the texture atlas frame ids
+	let id = PIXI.loader.resources["img/start_button.json"].textures;
+
+	let buttonFrames = [
+    	id[2],
+    	id[1],
+    	id[0]
+	];
+
+	startButton = t.button(buttonFrames);
+
+	startButton.anchor.x = 0.5;
+	startButton.anchor.y = 0.5;
+	startButton.x = renderer.width / 2;
+	startButton.y = renderer.height / 2;
+
+	startButton.release = () => {
+		// even after removing from screen, the button still is clickable
+		// for now, move it completely off the screen
+		startButton.x = -500;
+		startButton.y = -500;
+		clearScreen();
+		startGame();
+	}
+
+	stage.addChild(startButton);
 }
 
 function gameLoop() {
@@ -121,6 +155,7 @@ function play() {
 function clearScreen() {
 	// remove message and player
 	stage.removeChild(message);
+	stage.removeChild(startButton);
 	stage.removeChild(lifeMessage);
 	stage.removeChild(player);
 
@@ -516,6 +551,6 @@ window.onkeydown = function(e) {
 
 // load images and starts the game
 loader
-	.add(["img/pigeon.png", "img/eagle.png"])
+	.add(["img/start_button.json"])
 	.on("progress", loadProgressHandler)
 	.load(setup);
