@@ -9,7 +9,7 @@ var Container = PIXI.Container,
 	Text = PIXI.Text;
 
 // create the renderer
-var renderer = autoDetectRenderer(800, 600, {backgroundColor : 0x808b96});
+var renderer = autoDetectRenderer(800, 600, {backgroundColor : 0x0a3e74});//0x195087});//0x808b96});
 renderer.view.style.position = "absolute";
 renderer.view.style.display = "block";
 renderer.autoResize = true;
@@ -20,6 +20,9 @@ var stage = new Container();
 
 // add canvas to the html
 document.body.appendChild(renderer.view);
+
+// setup tink for buttons and collision(TODO collision)
+var t = new Tink(PIXI, renderer.view);
 /* -------------- END sets up stage and game rendering -------------- */
 
 
@@ -87,6 +90,9 @@ function gameLoop() {
 
 	// handles user input
 	play();
+
+	// update tink
+	t.update();
 
 	// renders the content on the screen
 	renderer.render(stage);
