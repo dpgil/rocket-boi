@@ -10,7 +10,7 @@ var Container = PIXI.Container,
 	utils = PIXI.utils;
 
 // create the renderer
-var renderer = autoDetectRenderer(800, 600, {backgroundColor : 0x0a3e74});//0x195087});//0x808b96});
+var renderer = autoDetectRenderer(1000, 600, {backgroundColor : 0x0a3e74});//0x195087});//0x808b96});
 renderer.view.style.position = "absolute";
 renderer.view.style.display = "block";
 renderer.autoResize = true;
@@ -40,6 +40,8 @@ var message = "";
 var startButton;
 // text sprite handling user lives
 var lifeMessage = "";
+// text sprite handling current level
+var levelMessage = "";
 // list of obstacles blocking the player
 var obstacles = [];
 // list of locations obstacles can spawn
@@ -182,6 +184,7 @@ function clearScreen() {
 	stage.removeChild(message);
 	stage.removeChild(startButton);
 	stage.removeChild(lifeMessage);
+	stage.removeChild(levelMessage);
 	stage.removeChild(player);
 
 	clearObstacles();
@@ -266,8 +269,28 @@ function createLifeMessage() {
 	stage.addChild(lifeMessage);
 }
 
+function createLevelMessage() {
+	// creates the text sprite
+	levelMessage = new Text("Level: 1",
+		{fontFamily: "Arial",
+		fontSize: 32,
+		fill: "white"}
+	);
+
+	// set text position
+	levelMessage.x = 7;
+	levelMessage.y = 7 + lifeMessage.height + 7;
+
+	// adds it to the stage
+	stage.addChild(levelMessage);
+}
+
 function updateLifeMessage() {
 	lifeMessage.text = "Lives: " + lives;
+}
+
+function updateLevelMessage() {
+	levelMessage.text = "Level: " + level;
 }
 
 function startGame() {
@@ -285,8 +308,9 @@ function startGame() {
 	// starts with 3 lives
 	lives = 3;
 
-	// adds or updates the life message sprite
+	// adds or updates the life and level message sprites
 	createLifeMessage();
+	createLevelMessage();
 
 	// updates the game state
 	gameOver = false;
@@ -578,8 +602,10 @@ window.onkeydown = function(e) {
 /* -------------- END functions -------------- */
 
 
+/* -------------- BEGIN script body -------------- */
 // load images and starts the game
 loader
 	.add(["img/start_button.json"])
 	.on("progress", loadProgressHandler)
 	.load(setup);
+/* -------------- END script body -------------- */
