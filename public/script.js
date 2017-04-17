@@ -42,6 +42,8 @@ var startButton;
 var lifeMessage = "";
 // list of obstacles blocking the player
 var obstacles = [];
+// list of locations obstacles can spawn
+var spawnLocations = [];
 // keeps track of the game state
 var gameOver = true;
 // keeps track of recently lost life
@@ -79,6 +81,14 @@ function setup() {
 	//createText("Press space to play");
 	addMainMenuButtons();
 
+	// calculates locations the obstacles can spawn
+	constructSpawnLocations();
+
+	// prints all scales
+	console.log("renderer.width: "+renderer.width);
+	console.log("renderer.height: "+renderer.height);
+
+
 	// set game state to over 
 	// waiting at the menu is not playing
 	gameOver = true;
@@ -92,6 +102,17 @@ function addMainMenuButtons() {
 	addStartButton();	
 }
 
+function constructSpawnLocations() {
+	let i = 0;
+	let locations = 9;
+	let obstacleRad = Math.floor(0.04802 * renderer.width);
+	for (i = 0; i < locations; i++) {
+		let loc = Math.floor((renderer.width / locations) * i) + obstacleRad;
+		spawnLocations.push(loc);
+	}
+	//console.log(spawnLocations);
+}
+
 function addStartButton() {
 	let id = PIXI.loader.resources["img/start_button.json"].textures;
 
@@ -103,8 +124,8 @@ function addStartButton() {
 
 	startButton = t.button(buttonFrames);
 
-	startButton.height = 150;
-	startButton.width = 300;
+	startButton.height = Math.floor(0.15495 * renderer.height);//150;
+	startButton.width = Math.floor(0.18007 * renderer.width);//300;
 	startButton.anchor.x = 0.5;
 	startButton.anchor.y = 0.5;
 	startButton.x = renderer.width / 2;
@@ -170,9 +191,12 @@ function createPlayer() {
 	// makes player a red squares
 	player = new Graphics();
 
+	// scale with precalculated constants
+	let pside = Math.floor(0.04802 * renderer.width);
+
 	// fills in the color
 	player.beginFill(0xC0392B);
-	player.drawRect(0, 0, 80, 80);
+	player.drawRect(0, 0, pside, pside);
 	player.endFill();
 
 	// puts player in the middle of the screen
@@ -187,7 +211,7 @@ function createObstacle() {
 	var obstacle = new Graphics();
 
 	// initializes obstacle radius
-	obstacle.radius = 80;
+	obstacle.radius = Math.floor(0.04802 * renderer.width);//80;
 
 	// fills in the color
 	obstacle.beginFill(0xF4D03F);
@@ -195,7 +219,8 @@ function createObstacle() {
 	obstacle.endFill();
 
 	// sets obstacle position to random x
-	let rx = Math.floor(Math.random() * renderer.width);
+	//let rx = Math.floor(Math.random() * renderer.width);
+	let rx = spawnLocations[Math.floor(Math.random() * spawnLocations.length)];
 	obstacle.x = rx;
 	obstacle.y = renderer.height + obstacle.radius;
 
