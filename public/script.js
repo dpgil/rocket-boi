@@ -187,7 +187,7 @@ function createObstacle() {
 	var obstacle = new Graphics();
 
 	// initializes obstacle radius
-	obstacle.radius = 64;
+	obstacle.radius = 80;
 
 	// fills in the color
 	obstacle.beginFill(0xF4D03F);
@@ -331,15 +331,14 @@ function clearObstacles() {
 
 function updateObstacles() {
 	obstacles.forEach(function(obstacle) {
+		obstacle.moveUp();
+
 		if (hitTestRectCircle(player, obstacle)) {
 			// player hit an obstacle
 			loseLife();
 		} else if (obstacleOutOfRange(obstacle)) {
 			// obstacle has left the screen, remove it
 			removeObstacle(obstacle);
-		} else {
-			// nothing wrong, continue moving the obstacle
-			obstacle.moveUp();
 		}
 	});
 }
