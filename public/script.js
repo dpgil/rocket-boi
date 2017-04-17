@@ -32,6 +32,8 @@ var t = new Tink(PIXI, renderer.view);
 var level = 0;
 // lives left
 var lives = 3;
+// current obstacles allowed to pass
+var obstacleCount = 0;
 // main player sprite
 var player;
 // text sprite displayed to the user
@@ -42,17 +44,19 @@ var startButton;
 var lifeMessage = "";
 // text sprite handling current level
 var levelMessage = "";
+// text sprite handling obstacle count
+var obstacleMessage = "";
 // list of obstacles blocking the player
 var obstacles = [];
 // list of locations obstacles can spawn
 var spawnLocations = [];
-// keeps track of the game state
-var gameOver = true;
-// keeps track of recently lost life
-var recentlyLostLife = false;
 
-// number of obstacles to dodge per level
-var obstacleLimit = [50];
+// keeps track of the game state
+var gameOver;
+// keeps track of recently lost life
+var recentlyLostLife;
+// keeps track if a level was just completed
+var recentlyCompletedLevel;
 
 // keep track of key presses
 var keyPressed = [];
@@ -72,6 +76,11 @@ var MAXVEL = 5;
 var MINVEL = -5;
 var ACCELERATION = 0.5;
 var DECELERATION = 0.25;
+
+// number of obstacles needed to pass to advance to the next level. currently 10 levels max
+var levelObstacles = [0, 25, 50, 100, 150, 200, 250, 300, 400, 500, 1000];
+// obstacles colors based on level
+var obstacleColors = [0x000000, 0xF4D03F, 0x2ECC71, 0X3498DB, 0X8E44AD, 0X2C3E50, 0XECF0F1, 0XE67E22, 0XFA8072, 0XFE2EF7, 0X190707];
 /* -------------- END constants -------------- */
 
 
@@ -86,14 +95,11 @@ function setup() {
 	// calculates locations the obstacles can spawn
 	constructSpawnLocations();
 
-	// prints all scales
-	console.log("renderer.width: "+renderer.width);
-	console.log("renderer.height: "+renderer.height);
-
-
 	// set game state to over 
 	// waiting at the menu is not playing
 	gameOver = true;
+	recentlyLostLife = false;
+	recentlyCompletedLevel = false;
 
 	// kick off game loop
 	gameLoop();
@@ -134,11 +140,6 @@ function addStartButton() {
 	startButton.y = renderer.height / 2;
 
 	startButton.release = () => {
-		// even after removing from screen, the button still is clickable
-		// for now, move it completely off the screen
-		startButton.x = -500;
-		startButton.y = -500;
-		clearScreen();
 		startGame();
 	}
 
@@ -155,6 +156,8 @@ function gameLoop() {
 	// update tink
 	t.update();
 
+	console.log("Current level: "+level);
+
 	// renders the content on the screen
 	renderer.render(stage);
 }
@@ -169,6 +172,7 @@ function play() {
 		}
 	// game is not over, continue letting user move the player
 	} else {
+		// pauses player and obstacles if a level was just lost
 		if (!recentlyLostLife) {
 			// handle player movement
 			updatePlayer();
@@ -176,10 +180,23 @@ function play() {
 			// move obstacles
 			updateObstacles();
 		}
+
+		// just completed a level
+		if (recentlyCompletedLevel) {
+			// move to the next level only if all obstacles are clear
+			if (keyPressed[SPACE] && obstacles.length == 0) {
+				nextLevel();
+			}
+		}
 	}
 }
 
 function clearScreen() {
+	// even after removing from screen, the button still is clickable
+	// for now, move it completely off the screen
+	startButton.x = -500;
+	startButton.y = -500;
+
 	// remove message and player
 	stage.removeChild(message);
 	stage.removeChild(startButton);
@@ -217,7 +234,7 @@ function createObstacle() {
 	obstacle.radius = Math.floor(0.04802 * renderer.width);//80;
 
 	// fills in the color
-	obstacle.beginFill(0xF4D03F);
+	obstacle.beginFill(obstacleColors[level]);
 	obstacle.drawCircle(0, 0, obstacle.radius);
 	obstacle.endFill();
 
@@ -243,7 +260,7 @@ function createObstacle() {
 function spawnObstacle() {
 	// if the game ends, but set timeout is still going to call this function
 	// we want to ignore it so obstacles aren't added after the game ends
-	if (!gameOver && !recentlyLostLife) {
+	if (canSpawnObstacle()) {
 		// creates and adds an obstacle to the screen
 		createObstacle();
 
@@ -253,12 +270,18 @@ function spawnObstacle() {
 	}
 }
 
+function canSpawnObstacle() {
+	return !gameOver && !recentlyLostLife && !recentlyCompletedLevel;
+}
+
 function createLifeMessage() {
 	// creates the text sprite
 	lifeMessage = new Text("Lives: 3", 
-		{fontFamily: "Arial", 
-		fontSize: 32, 
-		fill: "white"}
+		{
+			fontFamily: "Arial", 
+			fontSize: 32, 
+			fill: "white"
+		}
 	);
 
 	// set text position
@@ -272,9 +295,11 @@ function createLifeMessage() {
 function createLevelMessage() {
 	// creates the text sprite
 	levelMessage = new Text("Level: 1",
-		{fontFamily: "Arial",
-		fontSize: 32,
-		fill: "white"}
+		{
+			fontFamily: "Arial",
+			fontSize: 32,
+			fill: "white"
+		}
 	);
 
 	// set text position
@@ -285,12 +310,38 @@ function createLevelMessage() {
 	stage.addChild(levelMessage);
 }
 
+function createObstacleMessage() {
+	// creates the text sprite
+	obstacleMessage = new Text(obstacleCount + "/" + levelObstacles[level],
+		{
+			fontFamily: "Arial",
+			fontSize: 32,
+			fill: "white"
+		}	
+	);
+
+	// set text position
+	obstacleMessage.x = 7;
+	obstacleMessage.y = levelMessage.y + levelMessage.height + 7;
+
+	// add to the stage
+	stage.addChild(obstacleMessage);
+}
+
 function updateLifeMessage() {
 	lifeMessage.text = "Lives: " + lives;
 }
 
 function updateLevelMessage() {
 	levelMessage.text = "Level: " + level;
+}
+
+function updateObstacleMessage() {
+	obstacleMessage.text = obstacleCount + "/" + levelObstacles[level];
+}
+
+function clearMessage() {
+	message.text = "";
 }
 
 function startGame() {
@@ -311,6 +362,7 @@ function startGame() {
 	// adds or updates the life and level message sprites
 	createLifeMessage();
 	createLevelMessage();
+	createObstacleMessage();
 
 	// updates the game state
 	gameOver = false;
@@ -357,6 +409,7 @@ function restartLife() {
 	resetPlayer();
 
 	recentlyLostLife = false;
+	recentlyCompletedLevel = false;
 	spawnObstacle();
 }
 
@@ -388,8 +441,38 @@ function updateObstacles() {
 		} else if (obstacleOutOfRange(obstacle)) {
 			// obstacle has left the screen, remove it
 			removeObstacle(obstacle);
+			obstacleCount++;
+			updateObstacleMessage();
+
+			// completed the required obstacles to advance to the next level
+			if (obstacleCount == levelObstacles[level]) {
+				// allow all current obstacles to clear
+				recentlyCompletedLevel = true;
+				// advance to the next level
+			} else if (obstacleCount > levelObstacles[level] && obstacles.length == 0) {
+				// all obstacles have completed passing through the screen
+				// now we can start the next level
+				//setTimeout(nextLevel, 1500);
+				createText("Level "+level+" complete! Press space to advance to the next level");
+
+				// TODO: Show a next level screen that the user can press space before starting
+			}
 		}
 	});
+}
+
+function nextLevel() {
+	level++;
+	updateLevelMessage();
+
+	clearMessage();
+
+	obstacleCount = 0;
+	updateObstacleMessage();
+	recentlyCompletedLevel = false;
+
+	// kick off new obstacles
+	spawnObstacle();
 }
 
 function updatePlayer() {
