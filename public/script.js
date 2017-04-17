@@ -172,7 +172,7 @@ function createPlayer() {
 
 	// fills in the color
 	player.beginFill(0xC0392B);
-	player.drawRect(0, 0, 64, 64);
+	player.drawRect(0, 0, 80, 80);
 	player.endFill();
 
 	// puts player in the middle of the screen
@@ -294,8 +294,9 @@ function loseLife() {
 }
 
 function resetPlayer() {
-	player.x = renderer.width / 2;
-	player.y = renderer.height / 2;
+	// centers player since the x,y are in the top left corner
+	player.x = renderer.width / 2 - player.width / 2;
+	player.y = renderer.height / 2 - player.height / 2;
 
 	player.xv = 0;
 	player.yv = 0;
