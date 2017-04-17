@@ -89,8 +89,10 @@ function setup() {
 }
 
 function addMainMenuButtons() {
+	addStartButton();	
+}
 
-	//Create an alias for the texture atlas frame ids
+function addStartButton() {
 	let id = PIXI.loader.resources["img/start_button.json"].textures;
 
 	let buttonFrames = [
@@ -101,6 +103,8 @@ function addMainMenuButtons() {
 
 	startButton = t.button(buttonFrames);
 
+	startButton.height = 150;
+	startButton.width = 300;
 	startButton.anchor.x = 0.5;
 	startButton.anchor.y = 0.5;
 	startButton.x = renderer.width / 2;
@@ -191,7 +195,7 @@ function createObstacle() {
 	obstacle.endFill();
 
 	// sets obstacle position to random x
-	var rx = Math.floor(Math.random() * renderer.width);
+	let rx = Math.floor(Math.random() * renderer.width);
 	obstacle.x = rx;
 	obstacle.y = renderer.height + obstacle.radius;
 
@@ -216,7 +220,7 @@ function spawnObstacle() {
 		createObstacle();
 
 		// spawns another obstacle in a random time
-		var rand = Math.floor(Math.random() * (500) + 200);
+		let rand = Math.floor(Math.random() * (500) + 200);
 		setTimeout(spawnObstacle, rand);
 	}
 }
@@ -312,7 +316,7 @@ function obstacleOutOfRange(obstacle) {
 
 function removeObstacle(obstacle) {
 	// removes obstacle from our internal list and from the screen
-	var index = obstacles.indexOf(obstacle);
+	let index = obstacles.indexOf(obstacle);
 	obstacles.splice(index, 1);
 	stage.removeChild(obstacle);
 }
@@ -458,14 +462,14 @@ function hitTestRectCircle(r, c) {
 	// i.e. center of circle is within one radius away from rect edges
 
 	// finds the center of the rectangle and circle
-	var rx = r.x + r.width / 2;
-	var ry = r.y + r.height / 2;
-	var cx = c.x;
-	var cy = c.y;
+	let rx = r.x + r.width / 2;
+	let ry = r.y + r.height / 2;
+	let cx = c.x;
+	let cy = c.y;
 
 	// circle distance x and y
-	var cdx = Math.abs(cx - rx);
-	var cdy = Math.abs(cy - ry);
+	let cdx = Math.abs(cx - rx);
+	let cdy = Math.abs(cy - ry);
 
 	// circle center is farther than half the rect + circle radius from rect center
 	if (cdx > (r.width / 2 + c.radius)) { return false; }
@@ -484,7 +488,7 @@ function hitTestRectCircle(r, c) {
 
 function hitTestRectangle(r1, r2) {
 	//Define the variables we'll need to calculate
-	var hit, combinedHalfWidths, combinedHalfHeights, vx, vy;
+	let hit, combinedHalfWidths, combinedHalfHeights, vx, vy;
 
 	//hit will determine whether there's a collision
 	hit = false;
