@@ -430,7 +430,13 @@ function chooseSpawnLocationIndex() {
 
 	// picks a random one of the possibilities
 	let r = Math.floor(Math.random() * poss.length);
-	return poss[r];
+	let slotIndex = poss[r];
+
+	// can't spawn in the same slot for 1s
+	canSpawn[slotIndex] = false;
+	setTimeout(function() { canSpawn[slotIndex] = true; }, 1000);
+
+	return slotIndex;
 }
 
 function canSpawnObstacle() {
@@ -538,6 +544,13 @@ function createPlayer() {
 }
 
 function createObstacle() {
+	// chooses a random location of the available locations
+	let ri = chooseSpawnLocationIndex();
+	// no available locations at the moment
+	if (ri == -1) {
+		return;
+	}
+
 	// creates the graphics object
 	var obstacle = new Graphics();
 
@@ -548,16 +561,6 @@ function createObstacle() {
 	obstacle.beginFill(obstacleColors[level]);
 	obstacle.drawCircle(0, 0, obstacle.radius);
 	obstacle.endFill();
-
-	// chooses a random location of the available locations
-	let ri = chooseSpawnLocationIndex();
-	// no available locations at the moment
-	if (ri == -1) {
-		return;
-	}
-	// can't spawn another obstacle in the same slot for 1s
-	canSpawn[ri] = false;
-	setTimeout(function() { canSpawn[ri] = true; }, 1000);
 
 	// sets the obstacle position
 	obstacle.x = spawnLocations[ri];
