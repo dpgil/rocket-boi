@@ -156,8 +156,6 @@ function gameLoop() {
 	// update tink
 	t.update();
 
-	console.log("Current level: "+level);
-
 	// renders the content on the screen
 	renderer.render(stage);
 }
@@ -202,6 +200,7 @@ function clearScreen() {
 	stage.removeChild(startButton);
 	stage.removeChild(lifeMessage);
 	stage.removeChild(levelMessage);
+	stage.removeChild(obstacleMessage);
 	stage.removeChild(player);
 
 	clearObstacles();
@@ -359,6 +358,9 @@ function startGame() {
 	// starts with 3 lives
 	lives = 3;
 
+	// no obstacles
+	obstacleCount = 0;
+
 	// adds or updates the life and level message sprites
 	createLifeMessage();
 	createLevelMessage();
@@ -462,6 +464,11 @@ function updateObstacles() {
 }
 
 function nextLevel() {
+	if (level == 10) {
+		console.log("YOU WIN THE GAME!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+		return;
+	}
+
 	level++;
 	updateLevelMessage();
 
