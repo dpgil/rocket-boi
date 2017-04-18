@@ -29,6 +29,8 @@ var t = new Tink(PIXI, renderer.view);
 
 
 /* -------------- BEGIN game variables -------------- */
+// keeps track of the game state
+var gameOver;
 // current level
 var level = 0;
 // lives left
@@ -37,10 +39,10 @@ var lives = 3;
 var obstacleCount = 0;
 // main player sprite
 var player;
-// text sprite displayed to the user
-var message = "";
 // main menu start button
 var startButton;
+// text sprite displayed to the user
+var message = "";
 // text sprite handling user lives
 var lifeMessage = "";
 // text sprite handling current level
@@ -51,14 +53,12 @@ var obstacleMessage = "";
 var obstacles = [];
 // list of locations obstacles can spawn
 var spawnLocations = [];
-
-// keeps track of the game state
-var gameOver;
+// list of if obstacles can be spawned
+var canSpawn = [];
 // keeps track of recently lost life
 var recentlyLostLife;
 // keeps track if a level was just completed
 var recentlyCompletedLevel;
-
 // keep track of key presses
 var keyPressed = [];
 /* -------------- END game variables -------------- */
@@ -72,6 +72,8 @@ var ACODE = 65;
 var SCODE = 83;
 var DCODE = 68;
 var SPACE = 32;
+
+var OBSTACLELOCATIONS = 9;
 
 // player movement
 var MAXVEL = 5;
@@ -409,6 +411,28 @@ function spawnObstacle() {
 	}
 }
 
+function chooseSpawnLocationIndex() {
+	// possible spawn locations
+	let poss = [];
+
+	// gets all possible spawn location indices
+	let i;
+	for (i = 0; i < OBSTACLELOCATIONS; i++) {
+		if (canSpawn[i]) {
+			poss.push(i);
+		}
+	}
+
+	// no available locations at the moment
+	if (poss.length == 0) {
+		return -1;
+	}
+
+	// picks a random one of the possibilities
+	let r = Math.floor(Math.random() * poss.length);
+	return poss[r];
+}
+
 function canSpawnObstacle() {
 	return !gameOver && !recentlyLostLife && !recentlyCompletedLevel;
 }
@@ -484,11 +508,13 @@ function obstacleOutOfRange(obstacle) {
 /* -------------- BEGIN constructors -------------- */
 function constructSpawnLocations() {
 	let i = 0;
-	let locations = 9;
 	let obstacleRad = Math.floor(0.04802 * renderer.width);
-	for (i = 0; i < locations; i++) {
-		let loc = Math.floor((renderer.width / locations) * i) + obstacleRad;
+
+	// divides screen into OBSTACLELOCATIONS number of slots
+	for (i = 0; i < OBSTACLELOCATIONS; i++) {
+		let loc = Math.floor((renderer.width / OBSTACLELOCATIONS) * i) + obstacleRad;
 		spawnLocations.push(loc);
+		canSpawn.push(true);
 	}
 }
 
@@ -523,10 +549,18 @@ function createObstacle() {
 	obstacle.drawCircle(0, 0, obstacle.radius);
 	obstacle.endFill();
 
-	// sets obstacle position to random x
-	//let rx = Math.floor(Math.random() * renderer.width);
-	let rx = spawnLocations[Math.floor(Math.random() * spawnLocations.length)];
-	obstacle.x = rx;
+	// chooses a random location of the available locations
+	let ri = chooseSpawnLocationIndex();
+	// no available locations at the moment
+	if (ri == -1) {
+		return;
+	}
+	// can't spawn another obstacle in the same slot for 1s
+	canSpawn[ri] = false;
+	setTimeout(function() { canSpawn[ri] = true; }, 1000);
+
+	// sets the obstacle position
+	obstacle.x = spawnLocations[ri];
 	obstacle.y = renderer.height + obstacle.radius;
 
 	// adds obstacle movement
