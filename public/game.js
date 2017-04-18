@@ -76,10 +76,14 @@ var SPACE = 32;
 var OBSTACLELOCATIONS = 9;
 
 // player movement
-var MAXVEL = 5;
-var MINVEL = -5;
+var MAXPVEL = 5;
+var MINPVEL = -5;
 var ACCELERATION = 0.5;
 var DECELERATION = 0.25;
+
+// obstacle movement
+var maxovel = [0, 5, 6, 6, 7, 7, 8, 8, 9, 10, 12];
+var minovel = [0, 4, 4, 3, 3, 3, 3, 3, 4, 5, 5];
 
 // number of obstacles needed to pass to advance to the next level. currently 10 levels max
 var levelObstacles = [0, 25, 50, 100, 150, 200, 250, 300, 400, 500, 1000];
@@ -264,7 +268,7 @@ function updatePlayer() {
 	// W
 	if (keyPressed[WCODE]) {
 		// accelerate in the negative y direction
-		if (player.yv > MINVEL) {
+		if (player.yv > MINPVEL) {
 			player.yv -= ACCELERATION;
 		}
 	} else {
@@ -277,7 +281,7 @@ function updatePlayer() {
 	// A
 	if (keyPressed[ACODE]) {
 		// accelerate in the negative x direction
-		if (player.xv > MINVEL) {
+		if (player.xv > MINPVEL) {
 			player.xv -= ACCELERATION;
 		}
 	} else {
@@ -290,7 +294,7 @@ function updatePlayer() {
 	// S
 	if (keyPressed[SCODE]) {
 		// accelerate in the positive y direction
-		if (player.yv < MAXVEL) {
+		if (player.yv < MAXPVEL) {
 			player.yv += ACCELERATION;
 		}
 	} else {
@@ -303,7 +307,7 @@ function updatePlayer() {
 	// D
 	if (keyPressed[DCODE]) {
 		// accelerate in the positive x direction
-		if (player.xv < MAXVEL) {
+		if (player.xv < MAXPVEL) {
 			player.xv += ACCELERATION;
 		}
 	} else {
@@ -439,6 +443,14 @@ function chooseSpawnLocationIndex() {
 	return slotIndex;
 }
 
+function randomObstacleSpeed() {
+	let max = maxovel[level];
+	let min = minovel[level];
+	let s = Math.floor(Math.random() * (max-min+1)) + min;
+	console.log(s);
+	return s;
+}
+
 function canSpawnObstacle() {
 	return !gameOver && !recentlyLostLife && !recentlyCompletedLevel;
 }
@@ -567,7 +579,7 @@ function createObstacle() {
 	obstacle.y = renderer.height + obstacle.radius;
 
 	// adds obstacle movement
-	obstacle.speed = MAXVEL;
+	obstacle.speed = randomObstacleSpeed();
 	obstacle.moveUp = function() {
 		obstacle.y -= obstacle.speed;
 	}
