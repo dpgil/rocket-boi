@@ -249,6 +249,20 @@ function nextLevel() {
 	spawnObstacle();
 }
 
+function checkCompletedLevel() {
+	// completed the required obstacles to advance to the next level
+	if (obstacleCount == levelObstacles[level]) {
+		// stops spawning new obstacles, allows the
+		// current obstacles on the screen to clear
+		recentlyCompletedLevel = true;
+	// advance to the next level
+	} else if (obstacleCount > levelObstacles[level] && obstacles.length == 0) {
+		// all obstacles have completed passing through the screen
+		// now we can start the next level
+		createText("Level "+level+" complete! Press space to advance to the next level");
+	}
+}
+
 // progress handler
 function loadProgressHandler(loader, resource) {
 	// display file url being loaded
@@ -327,31 +341,12 @@ function updatePlayer() {
 
 function updateObstacles() {
 	obstacles.forEach(function(obstacle) {
+		// render obstacle
 		obstacle.moveUp();
 
-		if (hitTestRectCircle(player, obstacle)) {
-			// player hit an obstacle
-			loseLife();
-		} else if (obstacleOutOfRange(obstacle)) {
-			// obstacle has left the screen, remove it
-			removeObstacle(obstacle);
-			obstacleCount++;
-			updateObstacleMessage();
-
-			// completed the required obstacles to advance to the next level
-			if (obstacleCount == levelObstacles[level]) {
-				// allow all current obstacles to clear
-				recentlyCompletedLevel = true;
-				// advance to the next level
-			} else if (obstacleCount > levelObstacles[level] && obstacles.length == 0) {
-				// all obstacles have completed passing through the screen
-				// now we can start the next level
-				//setTimeout(nextLevel, 1500);
-				createText("Level "+level+" complete! Press space to advance to the next level");
-
-				// TODO: Show a next level screen that the user can press space before starting
-			}
-		}
+		// removes obstacle if its off the screen
+		// checks obstacle collisions
+		checkObstacleBounds(obstacle);
 	});
 }
 
@@ -446,9 +441,7 @@ function chooseSpawnLocationIndex() {
 function randomObstacleSpeed() {
 	let max = maxovel[level];
 	let min = minovel[level];
-	let s = Math.floor(Math.random() * (max-min+1)) + min;
-	console.log(s);
-	return s;
+	return Math.floor(Math.random() * (max-min+1)) + min;
 }
 
 function canSpawnObstacle() {
@@ -513,6 +506,23 @@ function maintainPlayerBounds() {
 	if (player.x > renderer.width - player.width) {
 		player.x = renderer.width - player.width;
 		player.xv = 0;
+	}
+}
+
+function checkObstacleBounds(obstacle) {
+	// player hit the obstacle
+	if (hitTestRectCircle(player, obstacle)) {
+		loseLife();
+	} else if (obstacleOutOfRange(obstacle)) {
+		// obstacle has left the screen, remove it
+		removeObstacle(obstacle);
+
+		// update text
+		obstacleCount++;
+		updateObstacleMessage();
+
+		// checks if the level has been completed
+		checkCompletedLevel();
 	}
 }
 
