@@ -527,7 +527,7 @@ function checkObstacleBounds(obstacle) {
 }
 
 function obstacleOutOfRange(obstacle) {
-	return obstacle.y + obstacle.radius < 0;
+	return obstacle.y > renderer.height + obstacle.radius;
 }
 /* -------------- END collision -------------- */
 
@@ -586,10 +586,10 @@ function createObstacle() {
 
 	// sets the obstacle position
 	obstacle.x = spawnLocations[ri];
-	obstacle.y = renderer.height + obstacle.radius;
+	obstacle.y = 0 - obstacle.radius;
 
 	// adds obstacle movement
-	obstacle.speed = randomObstacleSpeed();
+	obstacle.speed = -1 * randomObstacleSpeed();
 	obstacle.moveUp = function() {
 		obstacle.y -= obstacle.speed;
 	}
