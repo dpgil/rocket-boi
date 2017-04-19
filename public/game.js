@@ -36,7 +36,9 @@ var level = 0;
 // lives left
 var lives = 3;
 // current obstacles allowed to pass
-var obstacleCount = 0;
+var obstaclesPassed = 0;
+// current obstacles that have been spawned
+var obstaclesSpawned = 0;
 // main player sprite
 var player;
 // main menu start button
@@ -178,7 +180,8 @@ function resetGameState() {
 
 	level = 1;
 	lives = 3;
-	obstacleCount = 0;
+	obstaclesPassed = 0;
+	obstaclesSpawned = 0;
 }
 
 function endGame() {
@@ -203,6 +206,9 @@ function loseLife() {
 }
 
 function restartLife() {
+	// need to respawn the ones on the screen that the user hasn't passed
+	obstaclesSpawned -= obstacles.length;
+
 	clearObstacles();
 	recentlyLostLife = false;
 
@@ -242,17 +248,14 @@ function nextLevel() {
 
 function checkCompletedLevel() {
 	// completed the required obstacles to advance to the next level
-	if (obstacleCount == levelObstacles[level]) {
+	if (obstaclesPassed === levelObstacles[level]) {
 		// stops spawning new obstacles, allows the
 		// current obstacles on the screen to clear
 		recentlyCompletedLevel = true;
+		createText("Level "+level+" complete! Press space to advance to the next level");
+
 		return true;
 	// advance to the next level
-	} else if (obstacleCount > levelObstacles[level] && obstacles.length == 0) {
-		// all obstacles have completed passing through the screen
-		// now we can start the next level
-		createText("Level "+level+" complete! Press space to advance to the next level");
-		return true;
 	}
 
 	return false;
@@ -386,13 +389,14 @@ function decrementLifeCount() {
 	updateLifeMessage();
 }
 
-function incrementObstacleCount() {
-	obstacleCount++;
+function incrementObstaclesPassed() {
+	obstaclesPassed++;
 	updateObstacleMessage();
 }
 
 function resetObstacleCount() {
-	obstacleCount = 0;
+	obstaclesPassed = 0;
+	obstaclesSpawned = 0;
 	updateObstacleMessage();
 }
 
@@ -405,7 +409,7 @@ function updateLevelMessage() {
 }
 
 function updateObstacleMessage() {
-	obstacleMessage.text = obstacleCount + "/" + levelObstacles[level];
+	obstacleMessage.text = obstaclesPassed + "/" + levelObstacles[level];
 }
 
 function clearMainMessage() {
@@ -418,6 +422,7 @@ function spawnObstacle() {
 	if (canSpawnObstacle()) {
 		// creates and adds an obstacle to the screen
 		createObstacle();
+		obstaclesSpawned++;
 
 		// spawns another obstacle in a random time
 		let rand = Math.floor(Math.random() * (500) + 200);
@@ -460,7 +465,7 @@ function randomObstacleSpeed() {
 }
 
 function canSpawnObstacle() {
-	return !gameOver && !recentlyLostLife && !recentlyCompletedLevel;
+	return !gameOver && !recentlyLostLife && !recentlyCompletedLevel && obstaclesSpawned < levelObstacles[level];
 }
 /* -------------- END rendering -------------- */
 
@@ -533,7 +538,7 @@ function checkObstacleBounds(obstacle) {
 		removeObstacle(obstacle);
 
 		// update text
-		incrementObstacleCount();
+		incrementObstaclesPassed();
 
 		// checks if the level has been completed
 		checkCompletedLevel();
@@ -676,7 +681,7 @@ function createLevelMessage() {
 
 function createObstacleMessage() {
 	// creates the text sprite
-	obstacleMessage = new Text(obstacleCount + "/" + levelObstacles[level],
+	obstacleMessage = new Text(obstaclesPassed + "/" + levelObstacles[level],
 		{
 			fontFamily: "Arial",
 			fontSize: 32,
