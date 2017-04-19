@@ -30,7 +30,7 @@ var t = new Tink(PIXI, renderer.view);
 
 /* -------------- BEGIN game variables -------------- */
 // keeps track of the game state
-var gameOver;
+var gameOver = true;
 // current level
 var level = 0;
 // lives left
@@ -42,7 +42,7 @@ var player;
 // main menu start button
 var startButton;
 // text sprite displayed to the user
-var message = "";
+var mainMessage = "";
 // text sprite handling user lives
 var lifeMessage = "";
 // text sprite handling current level
@@ -56,9 +56,9 @@ var spawnLocations = [];
 // list of if obstacles can be spawned
 var canSpawn = [];
 // keeps track of recently lost life
-var recentlyLostLife;
+var recentlyLostLife = false;;
 // keeps track if a level was just completed
-var recentlyCompletedLevel;
+var recentlyCompletedLevel = false;;
 // keep track of key presses
 var keyPressed = [];
 /* -------------- END game variables -------------- */
@@ -104,12 +104,6 @@ function setup() {
 	// calculates locations the obstacles can spawn
 	constructSpawnLocations();
 
-	// set game state to over 
-	// waiting at the menu is not playing
-	gameOver = true;
-	recentlyLostLife = false;
-	recentlyCompletedLevel = false;
-
 	// kick off game loop
 	gameLoop();
 	//setInterval(gameLoop, 10);
@@ -127,6 +121,25 @@ function gameLoop() {
 
 	// renders the content on the screen
 	renderer.render(stage);
+}
+
+function startGame() {
+	console.log("Starting game at level 1");
+
+	// clears the screen
+	clearScreen();
+
+	// updates the game state
+	resetGameState();
+
+	// creates the player
+	createPlayer();
+
+	// adds or updates the life and level message sprites
+	createMessageSprites();
+
+	// begins spawning obstacles in 1 sec
+	setTimeout(spawnObstacle, 1000);
 }
 
 function play() {
@@ -158,35 +171,20 @@ function play() {
 	}
 }
 
-function startGame() {
-	console.log("Starting game at level 1");
+function resetGameState() {
+	gameOver = false;
+	recentlyLostLife = false;
+	recentlyCompletedLevel = false;
 
-	// clears the screen
-	clearScreen();
-
-	// creates the player
-	createPlayer();
-
-	// starts at level 1
 	level = 1;
-
-	// starts with 3 lives
 	lives = 3;
-
-	// no obstacles
 	obstacleCount = 0;
+}
 
-	// adds or updates the life and level message sprites
+function createMessageSprites() {
 	createLifeMessage();
 	createLevelMessage();
 	createObstacleMessage();
-
-	// updates the game state
-	gameOver = false;
-	recentlyLostLife = false;
-
-	// begins spawning obstacles in 1 sec
-	setTimeout(spawnObstacle, 1000);
 }
 
 function endGame() {
@@ -198,9 +196,7 @@ function endGame() {
 }
 
 function loseLife() {
-	lives -= 1;
-	recentlyLostLife = true;
-	updateLifeMessage();
+	decrementLifeCount();
 
 	// out of lives, game over
 	if (lives === 0) {
@@ -239,17 +235,15 @@ function nextLevel() {
 		return;
 	}
 
-	level++;
-	updateLevelMessage();
+	incrementLevelCount();
 
-	clearMessage();
+	clearMainMessage();
 
-	obstacleCount = 0;
-	updateObstacleMessage();
+	resetObstacleCount();
 	recentlyCompletedLevel = false;
 
 	// kick off new obstacles
-	spawnObstacle();
+	setTimeout(spawnObstacle, 1000);
 }
 
 function checkCompletedLevel() {
@@ -364,7 +358,7 @@ function clearScreen() {
 	startButton.y = -500;
 
 	// remove message and player
-	stage.removeChild(message);
+	stage.removeChild(mainMessage);
 	stage.removeChild(startButton);
 	stage.removeChild(lifeMessage);
 	stage.removeChild(levelMessage);
@@ -388,6 +382,27 @@ function clearObstacles() {
 	obstacles = [];
 }
 
+function incrementLevelCount() {
+	level++;
+	updateLevelMessage();
+}
+
+function decrementLifeCount() {
+	lives--;
+	recentlyLostLife = true;
+	updateLifeMessage();
+}
+
+function incrementObstacleCount() {
+	obstacleCount++;
+	updateObstacleMessage();
+}
+
+function resetObstacleCount() {
+	obstacleCount = 0;
+	updateObstacleMessage();
+}
+
 function updateLifeMessage() {
 	lifeMessage.text = "Lives: " + lives;
 }
@@ -400,8 +415,8 @@ function updateObstacleMessage() {
 	obstacleMessage.text = obstacleCount + "/" + levelObstacles[level];
 }
 
-function clearMessage() {
-	message.text = "";
+function clearMainMessage() {
+	mainMessage.text = "";
 }
 
 function spawnObstacle() {
@@ -525,8 +540,7 @@ function checkObstacleBounds(obstacle) {
 		removeObstacle(obstacle);
 
 		// update text
-		obstacleCount++;
-		updateObstacleMessage();
+		incrementObstacleCount();
 
 		// checks if the level has been completed
 		checkCompletedLevel();
@@ -610,7 +624,7 @@ function createObstacle() {
 
 function createText(s) {
 	// take a string and display it on the screen
-	message = new Text(s, 
+	mainMessage = new Text(s, 
 		{fontFamily: "Arial", 
 		fontSize: 64, 
 		fill: "white", 
@@ -620,15 +634,15 @@ function createText(s) {
 	);
 	
 	// set text anchor to its center
-	message.anchor.x = 0.5;
-	message.anchor.y = 0.5;
+	mainMessage.anchor.x = 0.5;
+	mainMessage.anchor.y = 0.5;
 
 	// set text position
-	message.x = renderer.width / 2;
-	message.y = renderer.height / 2;
+	mainMessage.x = renderer.width / 2;
+	mainMessage.y = renderer.height / 2;
 
 	// add message to the stage
-	stage.addChild(message);
+	stage.addChild(mainMessage);
 }
 
 function createLifeMessage() {
