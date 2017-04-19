@@ -166,7 +166,7 @@ function play() {
 		// just completed a level
 		if (recentlyCompletedLevel) {
 			// move to the next level only if all obstacles are clear
-			if (keyPressed[SPACE] && obstacles.length == 0) {
+			if (keyPressed[SPACE] && obstacles.length === 0) {
 				nextLevel();
 			}
 		}
@@ -230,7 +230,7 @@ function resetPlayer() {
 }
 
 function nextLevel() {
-	if (level == 10) {
+	if (level === 10) {
 		createText("YOU WIN THE GAME!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 		return;
 	}
@@ -443,7 +443,7 @@ function chooseSpawnLocationIndex() {
 	}
 
 	// no available locations at the moment
-	if (poss.length == 0) {
+	if (poss.length === 0) {
 		return -1;
 	}
 
@@ -588,7 +588,7 @@ function createObstacle() {
 	// chooses a random location of the available locations
 	let ri = chooseSpawnLocationIndex();
 	// no available locations at the moment
-	if (ri == -1) {
+	if (ri === -1) {
 		return;
 	}
 
