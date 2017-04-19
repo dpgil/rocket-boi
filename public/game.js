@@ -214,11 +214,14 @@ function loseLife() {
 function restartLife() {
 	clearObstacles();
 
-	resetPlayer();
-
 	recentlyLostLife = false;
-	recentlyCompletedLevel = false;
-	spawnObstacle();
+
+	if (!checkCompletedLevel()) {
+		resetPlayer();
+
+		recentlyCompletedLevel = false;
+		spawnObstacle();
+	}
 }
 
 function resetPlayer() {
@@ -232,7 +235,7 @@ function resetPlayer() {
 
 function nextLevel() {
 	if (level == 10) {
-		console.log("YOU WIN THE GAME!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+		createText("YOU WIN THE GAME!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 		return;
 	}
 
@@ -255,12 +258,16 @@ function checkCompletedLevel() {
 		// stops spawning new obstacles, allows the
 		// current obstacles on the screen to clear
 		recentlyCompletedLevel = true;
+		return true;
 	// advance to the next level
 	} else if (obstacleCount > levelObstacles[level] && obstacles.length == 0) {
 		// all obstacles have completed passing through the screen
 		// now we can start the next level
 		createText("Level "+level+" complete! Press space to advance to the next level");
+		return true;
 	}
+
+	return false;
 }
 
 // progress handler
