@@ -181,12 +181,6 @@ function resetGameState() {
 	obstacleCount = 0;
 }
 
-function createMessageSprites() {
-	createLifeMessage();
-	createLevelMessage();
-	createObstacleMessage();
-}
-
 function endGame() {
 	// changes the game state
 	gameOver = true;
@@ -197,6 +191,7 @@ function endGame() {
 
 function loseLife() {
 	decrementLifeCount();
+	recentlyLostLife = true;
 
 	// out of lives, game over
 	if (lives === 0) {
@@ -209,7 +204,6 @@ function loseLife() {
 
 function restartLife() {
 	clearObstacles();
-
 	recentlyLostLife = false;
 
 	if (!checkCompletedLevel()) {
@@ -389,7 +383,6 @@ function incrementLevelCount() {
 
 function decrementLifeCount() {
 	lives--;
-	recentlyLostLife = true;
 	updateLifeMessage();
 }
 
@@ -722,6 +715,12 @@ function createStartButton() {
 	}
 
 	stage.addChild(startButton);
+}
+
+function createMessageSprites() {
+	createLifeMessage();
+	createLevelMessage();
+	createObstacleMessage();
 }
 
 function createMainMenuButtons() {
