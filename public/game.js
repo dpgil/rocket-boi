@@ -98,13 +98,17 @@ var obstacleColors = [0x000000, 0xF4D03F, 0x2ECC71, 0X3498DB, 0X8E44AD, 0X2C3E50
 /* -------------- END constants -------------- */
 
 
+var far;
+
 
 /* -------------- BEGIN setup and game state functions -------------- */
 function setup() {
 	console.log("Starting main menu");
 
+	// bg
+	createBackground();
+
 	// show main menu "press space to play"
-	//createText("Press space to play");
 	createMainMenuButtons();
 
 	// calculates locations the obstacles can spawn
@@ -122,7 +126,8 @@ function gameLoop() {
 	// handles user input
 	play();
 
-	// update tink
+	// update tink for button
+	// could improve render speed by not updating tink when no button is displayed
 	t.update();
 
 	// renders the content on the screen
@@ -158,6 +163,8 @@ function play() {
 		}
 	// game is not over, continue letting user move the player
 	} else {
+		updateBackground();
+
 		// pauses player and obstacles if a level was just lost
 		if (!recentlyLostLife) {
 			// handle player movement
@@ -175,6 +182,10 @@ function play() {
 			}
 		}
 	}
+}
+
+function updateBackground() {
+	far.tilePosition.y += 0.5;
 }
 
 function resetGameState() {
@@ -521,10 +532,10 @@ function hitTestRectangle(r1, r2) {
   hit = false;
 
   //Find the center points of each sprite
-  r1.centerX = r1.x + r1.width / 2;
-  r1.centerY = r1.y + r1.height / 2;
-  r2.centerX = r2.x + r2.width / 2;
-  r2.centerY = r2.y + r2.height / 2;
+  r1.centerX = r1.x;// + r1.width / 2;
+  r1.centerY = r1.y;// + r1.height / 2;
+  r2.centerX = r2.x;// + r2.width / 2;
+  r2.centerY = r2.y;// + r2.height / 2;
 
   //Find the half-widths and half-heights of each sprite
   r1.halfWidth = r1.width / 2;
@@ -709,6 +720,16 @@ function createText(s) {
 	stage.addChild(mainMessage);
 }
 
+function createBackground() {
+	var farTexture = PIXI.Texture.fromImage("img/bg.png");
+	far = new PIXI.extras.TilingSprite(farTexture, renderer.width, renderer.height);
+	far.position.x = 0;
+	far.position.y = 0;
+	far.tilePosition.x = 0;
+	far.tilePosition.y = 0;
+	stage.addChild(far);
+}
+
 function createLifeMessage() {
 	// creates the text sprite
 	lifeMessage = new Text("Lives: 3", 
@@ -816,7 +837,8 @@ window.onkeydown = function(e) {
 loader
 	.add(["img/start_button.json",
 		  "img/rocket.png",
-		  "img/asteroid.png"])
+		  "img/asteroid.png",
+		  "img/bg.png"])
 	.on("progress", loadProgressHandler)
 	.load(setup);
 /* -------------- END script body -------------- */
