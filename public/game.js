@@ -345,6 +345,7 @@ function updateObstacles() {
 	obstacles.forEach(function(obstacle) {
 		// render obstacle
 		obstacle.moveUp();
+		obstacle.rotation += obstacle.rotationSpeed;
 
 		// removes obstacle if its off the screen
 		// checks obstacle collisions
@@ -511,6 +512,57 @@ function hitTestRectCircle(r, c) {
 
 }
 
+function hitTestRectangle(r1, r2) {
+
+  //Define the variables we'll need to calculate
+  var hit, combinedHalfWidths, combinedHalfHeights, vx, vy;
+
+  //hit will determine whether there's a collision
+  hit = false;
+
+  //Find the center points of each sprite
+  r1.centerX = r1.x + r1.width / 2;
+  r1.centerY = r1.y + r1.height / 2;
+  r2.centerX = r2.x + r2.width / 2;
+  r2.centerY = r2.y + r2.height / 2;
+
+  //Find the half-widths and half-heights of each sprite
+  r1.halfWidth = r1.width / 2;
+  r1.halfHeight = r1.height / 2;
+  r2.halfWidth = r2.width / 2;
+  r2.halfHeight = r2.height / 2;
+
+  //Calculate the distance vector between the sprites
+  vx = r1.centerX - r2.centerX;
+  vy = r1.centerY - r2.centerY;
+
+  //Figure out the combined half-widths and half-heights
+  combinedHalfWidths = r1.halfWidth + r2.halfWidth;
+  combinedHalfHeights = r1.halfHeight + r2.halfHeight;
+
+  //Check for a collision on the x axis
+  if (Math.abs(vx) < combinedHalfWidths) {
+
+    //A collision might be occuring. Check for a collision on the y axis
+    if (Math.abs(vy) < combinedHalfHeights) {
+
+      //There's definitely a collision happening
+      hit = true;
+    } else {
+
+      //There's no collision on the y axis
+      hit = false;
+    }
+  } else {
+
+    //There's no collision on the x axis
+    hit = false;
+  }
+
+  //`hit` will be either `true` or `false`
+  return hit;
+};
+
 function maintainPlayerBounds() {
 	// keeps player inside the game screen. resets its velocity if it hits a wall
 
@@ -541,7 +593,7 @@ function maintainPlayerBounds() {
 
 function checkObstacleBounds(obstacle) {
 	// player hit the obstacle
-	if (hitTestRectCircle(player, obstacle)) {
+	if (hitTestRectangle(player, obstacle)) {
 		loseLife();
 	} else if (obstacleOutOfRange(obstacle)) {
 		// obstacle has left the screen, remove it
@@ -576,16 +628,15 @@ function constructSpawnLocations() {
 }
 
 function createPlayer() {
-	// makes player a red squares
-	player = new Graphics();
+	player = new Sprite(
+		loader.resources["img/rocket.png"].texture
+	);
 
 	// scale with precalculated constants
 	let pside = Math.floor(0.04802 * renderer.width);
 
-	// fills in the color
-	player.beginFill(0xC0392B);
-	player.drawRect(0, 0, pside, pside);
-	player.endFill();
+	player.height = pside * (872/600);
+	player.width = pside;
 
 	// puts player in the middle of the screen
 	resetPlayer();
@@ -603,19 +654,24 @@ function createObstacle() {
 	}
 
 	// creates the graphics object
-	var obstacle = new Graphics();
+	let obstacle = new Sprite(
+		loader.resources["img/asteroid.png"].texture
+	);
 
-	// initializes obstacle radius
-	obstacle.radius = Math.floor(0.04802 * renderer.width);//80;
+	let oside = Math.floor(0.04802 * renderer.width);
 
-	// fills in the color
-	obstacle.beginFill(obstacleColors[level]);
-	obstacle.drawCircle(0, 0, obstacle.radius);
-	obstacle.endFill();
+	obstacle.height = oside * 2;
+	obstacle.width = oside * 2;
+	obstacle.radius = oside;
+
+	obstacle.anchor.x = 0.5;
+	obstacle.anchor.y = 0.5;
+
+	obstacle.rotationSpeed = Math.random()*0.1+0.02;
 
 	// sets the obstacle position
 	obstacle.x = spawnLocations[ri];
-	obstacle.y = 0 - obstacle.radius;
+	obstacle.y = 0 - obstacle.height;
 
 	// adds obstacle movement
 	obstacle.speed = -1 * randomObstacleSpeed();
@@ -758,7 +814,9 @@ window.onkeydown = function(e) {
 
 // load images and starts the game
 loader
-	.add(["img/start_button.json"])
+	.add(["img/start_button.json",
+		  "img/rocket.png",
+		  "img/asteroid.png"])
 	.on("progress", loadProgressHandler)
 	.load(setup);
 /* -------------- END script body -------------- */
