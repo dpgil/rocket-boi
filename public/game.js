@@ -87,6 +87,10 @@ var DECELERATION = 0.25;
 var maxovel = [0, 5, 6, 6, 7, 7, 8, 8, 9, 10, 12];
 var minovel = [0, 4, 4, 3, 3, 3, 3, 3, 4, 5, 5];
 
+// spawn rates
+var minSpawnRate = [0, 200, 200, 200, 200, 150, 150, 150, 100, 100, 100];
+var maxSpawnRate = [0, 700, 700, 600, 600, 600, 600, 500, 500, 500, 500];
+
 // number of obstacles needed to pass to advance to the next level. currently 10 levels max
 var levelObstacles = [0, 25, 50, 100, 150, 200, 250, 300, 400, 500, 1000];
 // obstacles colors based on level
@@ -425,8 +429,8 @@ function spawnObstacle() {
 		obstaclesSpawned++;
 
 		// spawns another obstacle in a random time
-		let rand = Math.floor(Math.random() * (500) + 200);
-		setTimeout(spawnObstacle, rand);
+		let t = randomSpawnTime();
+		setTimeout(spawnObstacle, t);
 	}
 }
 
@@ -461,6 +465,12 @@ function chooseSpawnLocationIndex() {
 function randomObstacleSpeed() {
 	let max = maxovel[level];
 	let min = minovel[level];
+	return Math.floor(Math.random() * (max-min+1)) + min;
+}
+
+function randomSpawnTime() {
+	let max = maxSpawnRate[level];
+	let min = minSpawnRate[level];
 	return Math.floor(Math.random() * (max-min+1)) + min;
 }
 
