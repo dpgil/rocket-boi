@@ -604,9 +604,37 @@ function maintainPlayerBounds() {
 	}
 }
 
+function playerObstacleCollision(p, o) {
+	// detects collision between player and obstacle
+	// splits player up into two hitboxes
+	// checks if either of those collide with the asteroids hitbox
+	let verticalHitbox = { 
+		height : p.height,
+		width : p.width / 3,
+		x : p.x + p.width / 3,
+		y : p.y
+	};
+
+	let horizontalHitbox = {
+		height : p.height / 3,
+		width : p.width,
+		x : p.x,
+		y : p.y + p.height * 2 / 3
+	};
+
+	let obstacleHitbox = {
+		x : o.x,
+		y : o.y,
+		radius : o.radius * 0.8
+	};
+
+	return hitTestRectCircle(verticalHitbox, obstacleHitbox) || hitTestRectCircle(horizontalHitbox, obstacleHitbox);
+}
+
 function checkObstacleBounds(obstacle) {
 	// player hit the obstacle
-	if (hitTestRectCircle(player, obstacle)) {
+	if (playerObstacleCollision(player, obstacle)) {
+		console.log("player obstacle collision");
 		loseLife();
 	} else if (obstacleOutOfRange(obstacle)) {
 		// obstacle has left the screen, remove it
@@ -621,7 +649,7 @@ function checkObstacleBounds(obstacle) {
 }
 
 function obstacleOutOfRange(obstacle) {
-	return obstacle.y > renderer.height + obstacle.height/2;
+	return obstacle.y > renderer.height + obstacle.radius;
 }
 /* -------------- END collision -------------- */
 
@@ -651,9 +679,6 @@ function createPlayer() {
 	player.height = pside * (872/600);
 	player.width = pside;
 
-	player.anchor.x = 0.5;
-	player.anchor.y = 0.5;
-
 	// puts player in the middle of the screen
 	resetPlayer();
 
@@ -678,7 +703,7 @@ function createObstacle() {
 
 	obstacle.height = oside * 2;
 	obstacle.width = oside * 2;
-	obstacle.radius = oside * 0.8;
+	obstacle.radius = oside;
 
 	obstacle.anchor.x = 0.5;
 	obstacle.anchor.y = 0.5;
