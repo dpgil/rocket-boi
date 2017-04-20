@@ -62,9 +62,9 @@ var canSpawn = [];
 // power up item
 var powerUps = [];
 // keeps track of recently lost life
-var recentlyLostLife = false;;
+var recentlyLostLife = false;
 // keeps track if a level was just completed
-var recentlyCompletedLevel = false;;
+var recentlyCompletedLevel = false;
 // keep track of key presses
 var keyPressed = [];
 /* -------------- END game variables -------------- */
@@ -88,8 +88,8 @@ var PowerUpType = {
 	HALFSIZE : 0,
 	DOUBLESIZE : 1
 };
-var NUMPOWERUPS = 2;
-var POWERUPDURATION = 5000;
+var NUM_POWERUPS = 2;
+var POWERUP_DURATION = 5000;
 
 // player movement
 var MAXPVEL = 5;
@@ -97,8 +97,12 @@ var MINPVEL = -5;
 var ACCELERATION = 0.2;
 var DECELERATION = 0.05;
 
-var BORDERSIZE = 7;
-var OBSTACLELOCATIONS = 9;
+var BORDER_SIZE = 7;
+var OBSTACLE_LOCATIONS = 9;
+
+// player size
+var DEFAULT_PLAYER_HEIGHT = Math.floor(0.04802 * renderer.width) * (872/600);
+var DEFAULT_PLAYER_WIDTH = Math.floor(0.04802 * renderer.width);
 
 // obstacle movement
 var maxovel = [0, 5, 6, 6, 7, 7, 8, 8, 9, 10, 12];
@@ -249,20 +253,33 @@ function restartLife() {
 	recentlyLostLife = false;
 
 	if (!checkCompletedLevel()) {
-		resetPlayer();
+		resetPlayerValues();
 
 		recentlyCompletedLevel = false;
 		spawnObstacle();
 	}
 }
 
-function resetPlayer() {
+function resetPlayerValues() {
+	resetPlayerSize();
+	resetPlayerPosition();
+	resetPlayerVelocity();
+}
+
+function resetPlayerPosition() {
 	// centers player since the x,y are in the top left corner
 	player.x = renderer.width / 2 - player.width / 2;
 	player.y = renderer.height / 2 - player.height / 2;
+}
 
+function resetPlayerVelocity() {
 	player.xv = 0;
 	player.yv = 0;
+}
+
+function resetPlayerSize() {
+	player.height = DEFAULT_PLAYER_HEIGHT;
+	player.width = DEFAULT_PLAYER_WIDTH;
 }
 
 function nextLevel() {
@@ -514,7 +531,7 @@ function spawnObstacle() {
 function trySpawnPowerUp() {
 	// generates random number to see if power up
 	// should be spawned
-	let rand = Math.floor(Math.random() * 20);
+	let rand = Math.floor(Math.random() * 30);
 
 	// lucky number
 	if (rand === 7) {
@@ -523,7 +540,7 @@ function trySpawnPowerUp() {
 }
 
 function choosePowerUpType() {
-	return Math.floor(Math.random() * (NUMPOWERUPS + 1));
+	return Math.floor(Math.random() * NUM_POWERUPS);
 }
 
 function chooseSpawnLocationIndex() {
@@ -532,7 +549,7 @@ function chooseSpawnLocationIndex() {
 
 	// gets all possible spawn location indices
 	let i;
-	for (i = 0; i < OBSTACLELOCATIONS; i++) {
+	for (i = 0; i < OBSTACLE_LOCATIONS; i++) {
 		if (canSpawn[i]) {
 			poss.push(i);
 		}
@@ -745,22 +762,32 @@ function consumePowerUp(powerUp) {
 	// executes power up depending on type
 	switch(powerUp.type) {
 		case PowerUpType.HALFSIZE:
-			halfSizePowerUp();
+			halfPlayerSize();
 			break;
 		case PowerUpType.DOUBLESIZE:
-			doubleSizePowerUp();
+			doublePlayerSize();
 			break;
 	}
+
+	// power up only lasts for a certain amount of time
+	setTimeout(function () {
+		resetPlayerPowerUp(powerUp.type);
+	}, POWERUP_DURATION);
 }
 
-function halfSizePowerUp() {
-	halfPlayerSize();
-	setTimeout(doublePlayerSize, POWERUPDURATION);
-}
-
-function doubleSizePowerUp() {
-	doublePlayerSize();
-	setTimeout(halfPlayerSize, POWERUPDURATION);
+function resetPlayerPowerUp(type) {
+	if (type === PowerUpType.HALFSIZE) {
+		// we want to reset it but only if it hasn't already been reset
+		if (player.width < DEFAULT_PLAYER_WIDTH 
+			&& player.height < DEFAULT_PLAYER_HEIGHT) {
+			doublePlayerSize();
+		}
+	} else if (type === PowerUpType.DOUBLESIZE) {
+		if (player.width > DEFAULT_PLAYER_WIDTH
+			&& player.height > DEFAULT_PLAYER_HEIGHT) {
+			halfPlayerSize();
+		}
+	}
 }
 
 function halfPlayerSize() {
@@ -788,9 +815,9 @@ function constructSpawnLocations() {
 	let i = 0;
 	let obstacleRad = Math.floor(0.04802 * renderer.width);
 
-	// divides screen into OBSTACLELOCATIONS number of slots
-	for (i = 0; i < OBSTACLELOCATIONS; i++) {
-		let loc = Math.floor((renderer.width / OBSTACLELOCATIONS) * i) + obstacleRad;
+	// divides screen into OBSTACLE_LOCATIONS number of slots
+	for (i = 0; i < OBSTACLE_LOCATIONS; i++) {
+		let loc = Math.floor((renderer.width / OBSTACLE_LOCATIONS) * i) + obstacleRad;
 		spawnLocations.push(loc);
 		canSpawn.push(true);
 	}
@@ -801,14 +828,8 @@ function createPlayer() {
 		loader.resources["img/rocket.png"].texture
 	);
 
-	// scale with precalculated constants
-	let pside = Math.floor(0.04802 * renderer.width);
-
-	player.height = pside * (872/600);
-	player.width = pside;
-
 	// puts player in the middle of the screen
-	resetPlayer();
+	resetPlayerValues();
 
 	// add player to screen
 	stage.addChild(player);
@@ -933,8 +954,8 @@ function createLifeMessage() {
 	);
 
 	// set text position
-	lifeMessage.x = BORDERSIZE;
-	lifeMessage.y = BORDERSIZE;
+	lifeMessage.x = BORDER_SIZE;
+	lifeMessage.y = BORDER_SIZE;
 
 	// adds it to the stage
 	stage.addChild(lifeMessage);
@@ -951,8 +972,8 @@ function createLevelMessage() {
 	);
 
 	// set text position
-	levelMessage.x = BORDERSIZE;
-	levelMessage.y = BORDERSIZE + lifeMessage.height + BORDERSIZE;
+	levelMessage.x = BORDER_SIZE;
+	levelMessage.y = BORDER_SIZE + lifeMessage.height + BORDER_SIZE;
 
 	// adds it to the stage
 	stage.addChild(levelMessage);
@@ -969,8 +990,8 @@ function createObstacleMessage() {
 	);
 
 	// set text position
-	obstacleMessage.x = BORDERSIZE;
-	obstacleMessage.y = levelMessage.y + levelMessage.height + BORDERSIZE;
+	obstacleMessage.x = BORDER_SIZE;
+	obstacleMessage.y = levelMessage.y + levelMessage.height + BORDER_SIZE;
 
 	// add to the stage
 	stage.addChild(obstacleMessage);
