@@ -14,7 +14,7 @@ var renderer = autoDetectRenderer(1000, 600, {backgroundColor : 0x0a3e74});
 renderer.view.style.position = "absolute";
 renderer.view.style.display = "block";
 renderer.autoResize = true;
-renderer.resize(window.innerWidth, window.innerHeight);
+renderer.resize(window.innerWidth, window.innerHeight-50);
 
 // create the stage
 var stage = new Container();
@@ -45,6 +45,8 @@ var player;
 var far;
 // main menu start button
 var startButton;
+// information bar
+var infoBar;
 // text sprite displayed to the user
 var mainMessage = "";
 // text sprite handling user lives
@@ -105,6 +107,9 @@ var MINPVEL = -5;
 var ACCELERATION = 0.2;
 var DECELERATION = 0.05;
 
+var INFO_BAR_HEIGHT = 50;
+var SCREEN_TOP = 0;
+var SCREEN_BOTTOM = renderer.height - INFO_BAR_HEIGHT;
 var BORDER_SIZE = 7;
 var OBSTACLE_LOCATIONS = 9;
 
@@ -171,6 +176,9 @@ function startGame() {
 
 	// updates the game state
 	resetGameState();
+
+	// creates the info bar containing lives, level, etc
+	createInfoBar();
 
 	// creates the player
 	createPlayer();
@@ -285,7 +293,7 @@ function resetPlayerValues() {
 function resetPlayerPosition() {
 	// centers player since the x,y are in the top left corner
 	player.x = renderer.width / 2 - player.width / 2;
-	player.y = renderer.height / 2 - player.height / 2;
+	player.y = SCREEN_BOTTOM / 2 - player.height / 2;
 }
 
 function resetPlayerVelocity() {
@@ -730,8 +738,8 @@ function maintainPlayerBounds() {
 	// keeps player inside the game screen. resets its velocity if it hits a wall
 
 	// player tries to leave from the top
-	if (player.y < 0) {
-		player.y = 0;
+	if (player.y < SCREEN_TOP) {
+		player.y = SCREEN_TOP;
 		player.yv = 0;
 	}
 
@@ -742,8 +750,8 @@ function maintainPlayerBounds() {
 	}
 
 	// player tries to leave from the bottom
-	if (player.y > renderer.height - player.height) {
-		player.y = renderer.height - player.height;
+	if (player.y > SCREEN_BOTTOM - player.height) {
+		player.y = SCREEN_BOTTOM - player.height;
 		player.yv = 0;
 	}
 
@@ -889,11 +897,11 @@ function doublePlayerSize() {
 }
 
 function laserOutOfRange(laser) {
-	return laser.y + laser.height < 0;
+	return laser.y + laser.height < SCREEN_TOP;
 }
 
 function objectOutOfRange(obstacle) {
-	return obstacle.y > renderer.height + obstacle.height;
+	return obstacle.y > SCREEN_BOTTOM + obstacle.height;
 }
 /* -------------- END collision -------------- */
 
@@ -910,6 +918,19 @@ function constructSpawnLocations() {
 		spawnLocations.push(loc);
 		canSpawn.push(true);
 	}
+}
+
+function createInfoBar() {
+	// creates the graphics object
+	var infoBar = new Graphics();
+
+	// sets its values
+	infoBar.beginFill(0x1C2833);
+	infoBar.drawRect(0,SCREEN_BOTTOM,renderer.width,renderer.height);
+	infoBar.endFill();
+
+	// adds it to the screen
+	stage.addChild(infoBar);
 }
 
 function createPlayer() {
@@ -950,7 +971,7 @@ function createObstacle() {
 
 	// sets the obstacle position
 	obstacle.x = spawnLocations[ri];
-	obstacle.y = 0 - obstacle.height;
+	obstacle.y = SCREEN_TOP - obstacle.height;
 
 	// adds obstacle movement
 	obstacle.speed = randomObstacleSpeed();
@@ -1010,7 +1031,7 @@ function createPowerUp() {
 	powerUp.drawCircle(0,0,powerUp.radius);
 	powerUp.endFill();
 	powerUp.x = spawnLocations[ri];
-	powerUp.y = 0 - powerUp.radius;
+	powerUp.y = SCREEN_TOP - powerUp.radius;
 
 	powerUp.speed = 3;
 	powerUp.move = function() {
@@ -1041,7 +1062,7 @@ function createText(s) {
 
 	// set text position
 	mainMessage.x = renderer.width / 2;
-	mainMessage.y = renderer.height / 2;
+	mainMessage.y = SCREEN_BOTTOM / 2;
 
 	// add message to the stage
 	stage.addChild(mainMessage);
@@ -1122,12 +1143,12 @@ function createStartButton() {
 
 	startButton = t.button(buttonFrames);
 
-	startButton.height = Math.floor(0.15495 * renderer.height);//150;
+	startButton.height = Math.floor(0.15495 * SCREEN_BOTTOM);//150;
 	startButton.width = Math.floor(0.18007 * renderer.width);//300;
 	startButton.anchor.x = 0.5;
 	startButton.anchor.y = 0.5;
 	startButton.x = renderer.width / 2;
-	startButton.y = renderer.height / 2;
+	startButton.y = SCREEN_BOTTOM / 2;
 
 	startButton.release = () => {
 		startGame();
