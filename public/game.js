@@ -73,6 +73,10 @@ var WCODE = 87;
 var ACODE = 65;
 var SCODE = 83;
 var DCODE = 68;
+var LARROW = 37;
+var RARROW = 39;
+var UARROW = 38;
+var DARROW = 40;
 var SPACE = 32;
 
 var OBSTACLELOCATIONS = 9;
@@ -291,57 +295,73 @@ function loadProgressHandler(loader, resource) {
 
 
 /* -------------- BEGIN rendering -------------- */
+function upPressed() {
+	return keyPressed[WCODE] || keyPressed[UARROW];
+}
+
+function downPressed() {
+	return keyPressed[SCODE] || keyPressed[DARROW];
+}
+
+function leftPressed() {
+	return keyPressed[ACODE] || keyPressed[LARROW];
+}
+
+function rightPressed() {
+	return keyPressed[DCODE] || keyPressed[RARROW];
+}
+
 function updatePlayer() {
 	// updates velocities based on our accel/deceleration values
 	// so the player's movement is smoother
 	// W
-	if (keyPressed[WCODE]) {
+	if (upPressed()) {
 		// accelerate in the negative y direction
 		if (player.yv > MINPVEL) {
 			player.yv -= ACCELERATION;
 		}
 	} else {
 		// opposite key wasn't pressed, we slow down
-		if (!keyPressed[SCODE] && player.yv < 0) {
+		if (!downPressed() && player.yv < 0) {
 			player.yv += DECELERATION;
 		}
 	}
 
 	// A
-	if (keyPressed[ACODE]) {
+	if (leftPressed()) {
 		// accelerate in the negative x direction
 		if (player.xv > MINPVEL) {
 			player.xv -= ACCELERATION;
 		}
 	} else {
 		// opposite key wasn't pressed, we slow down
-		if (!keyPressed[DCODE] && player.xv < 0) {
+		if (!rightPressed() && player.xv < 0) {
 			player.xv += DECELERATION;
 		}
 	}
 
 	// S
-	if (keyPressed[SCODE]) {
+	if (downPressed()) {
 		// accelerate in the positive y direction
 		if (player.yv < MAXPVEL) {
 			player.yv += ACCELERATION;
 		}
 	} else {
 		// opposite key wasn't pressed, we slow down
-		if (!keyPressed[WCODE] && player.yv > 0) {
+		if (!upPressed() && player.yv > 0) {
 			player.yv -= DECELERATION;
 		}
 	}
 
 	// D
-	if (keyPressed[DCODE]) {
+	if (rightPressed()) {
 		// accelerate in the positive x direction
 		if (player.xv < MAXPVEL) {
 			player.xv += ACCELERATION;
 		}
 	} else {
 		// opposite key wasn't pressed, we slow down
-		if (!keyPressed[ACODE] && player.xv > 0) {
+		if (!leftPressed() && player.xv > 0) {
 			player.xv -= DECELERATION;
 		}
 	}
