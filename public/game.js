@@ -61,8 +61,12 @@ var spawnLocations = [];
 var canSpawn = [];
 // power up item
 var powerUps = [];
+// lasers flying around
+var lasers = [];
 // keeps track of recently lost life
 var recentlyLostLife = false;
+// keeps track of laser shots
+var recentlyShotLaser = false;
 // keeps track if a level was just completed
 var recentlyCompletedLevel = false;
 // keep track of key presses
@@ -86,10 +90,14 @@ var SPACE = 32;
 // enum for powerup types
 var PowerUpType = {
 	HALFSIZE : 0,
-	DOUBLESIZE : 1
+	DOUBLESIZE : 1,
+	LASERS : 2
 };
-var NUM_POWERUPS = 2;
+var NUM_POWERUPS = 3;
 var POWERUP_DURATION = 5000;
+var POWERUP_SPAWNRATE = 10;
+
+var LASER_SPEED = 20;
 
 // player movement
 var MAXPVEL = 5;
@@ -178,7 +186,7 @@ function play() {
 	// game is over, waiting for user to press space to play again
 	if (gameOver) {
 		// start the game over
-		if (keyPressed[SPACE]) {
+		if (spacePressed()) {
 			// start level 1
 			startGame();
 		}
@@ -188,24 +196,31 @@ function play() {
 
 		// pauses player and obstacles if a level was just lost
 		if (!recentlyLostLife) {
-			// handle player movement
-			updatePlayer();
-
-			// move obstacles
-			updateObstacles();
-
-			// move powerups
-			updatePowerUps();
+			updateScreenObjects();
 		}
 
 		// just completed a level
 		if (recentlyCompletedLevel) {
 			// move to the next level only if all obstacles are clear
-			if (keyPressed[SPACE] && obstacles.length === 0) {
+			if (spacePressed() && obstacles.length === 0) {
 				nextLevel();
 			}
 		}
 	}
+}
+
+function updateScreenObjects() {
+	// handle player movement
+	updatePlayer();
+
+	// move obstacles
+	updateObstacles();
+
+	// move powerups
+	updatePowerUps();
+
+	// move lasers
+	updateLasers();
 }
 
 function updateBackground() {
@@ -264,6 +279,7 @@ function resetPlayerValues() {
 	resetPlayerSize();
 	resetPlayerPosition();
 	resetPlayerVelocity();
+	resetPlayerPowerUps();
 }
 
 function resetPlayerPosition() {
@@ -280,6 +296,10 @@ function resetPlayerVelocity() {
 function resetPlayerSize() {
 	player.height = DEFAULT_PLAYER_HEIGHT;
 	player.width = DEFAULT_PLAYER_WIDTH;
+}
+
+function resetPlayerPowerUps() {
+	player.lasers = false;
 }
 
 function nextLevel() {
@@ -343,6 +363,10 @@ function rightPressed() {
 	return keyPressed[DCODE] || keyPressed[RARROW];
 }
 
+function spacePressed() {
+	return keyPressed[SPACE];
+}
+
 function updatePlayer() {
 	// updates velocities based on our accel/deceleration values
 	// so the player's movement is smoother
@@ -398,12 +422,24 @@ function updatePlayer() {
 		}
 	}
 
+	// SPACE
+	if (spacePressed()) {
+		// shoot lasers if the player has them
+		if (canShootLaser()) {
+			shootLaser();
+		}
+	}
+
 	// updates position
 	player.x += player.xv;
 	player.y += player.yv;
 
 	// maintains bounds
 	maintainPlayerBounds();
+}
+
+function canShootLaser() {
+	return player.lasers && !recentlyShotLaser;
 }
 
 function updateObstacles() {
@@ -426,6 +462,15 @@ function updatePowerUps() {
 		// removes powerup if it's off the screen
 		checkPowerUpBounds(powerUp);		
 	});
+}
+
+function updateLasers() {
+	lasers.forEach(function(laser) {
+		laser.move();
+
+		// checks if it's flown off the screen
+		checkLaserBounds(laser);
+	})
 }
 
 function clearScreen() {
@@ -458,6 +503,12 @@ function removePowerUp(powerUp) {
 	let index = powerUps.indexOf(powerUp);
 	powerUps.splice(index, 1);
 	stage.removeChild(powerUp);
+}
+
+function removeLaser(laser) {
+	let index = lasers.indexOf(laser);
+	lasers.splice(index, 1);
+	stage.removeChild(laser);
 }
 
 function clearObstacles() {
@@ -531,7 +582,7 @@ function spawnObstacle() {
 function trySpawnPowerUp() {
 	// generates random number to see if power up
 	// should be spawned
-	let rand = Math.floor(Math.random() * 30);
+	let rand = Math.floor(Math.random() * POWERUP_SPAWNRATE);
 
 	// lucky number
 	if (rand === 7) {
@@ -540,7 +591,8 @@ function trySpawnPowerUp() {
 }
 
 function choosePowerUpType() {
-	return Math.floor(Math.random() * NUM_POWERUPS);
+	return 2;
+	//return Math.floor(Math.random() * NUM_POWERUPS);
 }
 
 function chooseSpawnLocationIndex() {
@@ -746,6 +798,30 @@ function checkObstacleBounds(obstacle) {
 	}
 }
 
+function checkLaserBounds(laser) {
+	// laser hit an obstacle, we removed it
+	if (laserHitObstacle(laser)) {
+		incrementObstaclesPassed();
+	} else if (laserOutOfRange(laser)) {
+		// left the screen, remove it
+		removeLaser(laser);
+	}
+}
+
+function laserHitObstacle(laser) {
+	let hit = false;
+
+	obstacles.forEach(function(obstacle) {
+		if (hitTestRectCircle(laser, obstacle)) {
+			removeLaser(laser);
+			removeObstacle(obstacle);
+			hit = true;
+		}
+	});
+
+	return hit;
+}
+
 function checkPowerUpBounds(powerUp) {
 	if (playerCircleCollision(player, powerUp)) {
 		// do what power up do
@@ -767,6 +843,9 @@ function consumePowerUp(powerUp) {
 		case PowerUpType.DOUBLESIZE:
 			doublePlayerSize();
 			break;
+		case PowerUpType.LASERS:
+			addPlayerLasers();
+			break;
 	}
 
 	// power up only lasts for a certain amount of time
@@ -787,7 +866,13 @@ function resetPlayerPowerUp(type) {
 			&& player.height > DEFAULT_PLAYER_HEIGHT) {
 			halfPlayerSize();
 		}
+	} else if (type === PowerUpType.LASERS) {
+		player.lasers = false;
 	}
+}
+
+function addPlayerLasers() {
+	player.lasers = true;
 }
 
 function halfPlayerSize() {
@@ -801,6 +886,10 @@ function halfPlayerSize() {
 function doublePlayerSize() {
 	player.height = player.height * 2;
 	player.width = player.width * 2;
+}
+
+function laserOutOfRange(laser) {
+	return laser.y + laser.height < 0;
 }
 
 function objectOutOfRange(obstacle) {
@@ -874,6 +963,31 @@ function createObstacle() {
 
 	// add obstacle to the stage
 	stage.addChild(obstacle);
+}
+
+// creates a laser object
+function shootLaser() {
+	// creates a laser object
+	let laser = new Graphics();
+
+	laser.beginFill(0xE74C3C);
+	laser.drawRect(0,0,player.width/5, player.height/10);
+	laser.endFill();
+
+	laser.x = player.x + laser.width * 2;
+	laser.y = player.y - laser.height;
+
+	laser.speed = LASER_SPEED;
+	laser.move = function() {
+		laser.y -= laser.speed;
+	}
+
+	recentlyShotLaser = true;
+	setTimeout( function() { recentlyShotLaser = false; }, 300);
+
+	lasers.push(laser);
+
+	stage.addChild(laser);
 }
 
 function createPowerUp() {
