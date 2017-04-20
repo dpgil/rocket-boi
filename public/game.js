@@ -94,8 +94,8 @@ var POWERUPDURATION = 5000;
 // player movement
 var MAXPVEL = 5;
 var MINPVEL = -5;
-var ACCELERATION = 0.5;
-var DECELERATION = 0.25;
+var ACCELERATION = 0.2;
+var DECELERATION = 0.05;
 
 var BORDERSIZE = 7;
 var OBSTACLELOCATIONS = 9;
@@ -105,8 +105,10 @@ var maxovel = [0, 5, 6, 6, 7, 7, 8, 8, 9, 10, 12];
 var minovel = [0, 4, 4, 3, 3, 3, 3, 3, 4, 5, 5];
 
 // spawn rates
-var minSpawnRate = [0, 200, 200, 200, 200, 150, 150, 150, 100, 100, 100];
-var maxSpawnRate = [0, 700, 700, 600, 600, 600, 600, 500, 500, 500, 500];
+//var minSpawnRate = [0, 200, 200, 200, 200, 150, 150, 150, 100, 100, 100];
+//var maxSpawnRate = [0, 700, 700, 600, 600, 600, 600, 500, 500, 500, 500];
+var minSpawnRate = [0, 400, 350, 300, 250, 200, 200, 150, 150, 100, 100];
+var maxSpawnRate = [0, 1000, 900, 700, 700, 650, 650, 600, 600, 550, 500];
 
 // number of obstacles needed to pass to advance to the next level. currently 10 levels max
 var levelObstacles = [0, 25, 50, 100, 150, 200, 250, 300, 400, 500, 1000];
