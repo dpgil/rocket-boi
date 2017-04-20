@@ -93,9 +93,10 @@ var SPACE = 32;
 var PowerUpType = {
 	HALFSIZE : 0,
 	DOUBLESIZE : 1,
-	LASERS : 2
+	LASERS : 2,
+	TWIN : 3
 };
-var NUM_POWERUPS = 3;
+var NUM_POWERUPS = 4;
 var POWERUP_DURATION = 5000;
 var POWERUP_SPAWNRATE = 10;
 
@@ -220,7 +221,10 @@ function play() {
 
 function updateScreenObjects() {
 	// handle player movement
-	updatePlayer();
+	updatePlayer(player);
+	if (player.twin) {
+		updatePlayer(player.twinSprite);
+	}
 
 	// move obstacles
 	updateObstacles();
@@ -285,38 +289,42 @@ function restartLife() {
 	recentlyLostLife = false;
 
 	if (!checkCompletedLevel()) {
-		resetPlayerValues();
+		resetPlayerValues(player);
 
 		recentlyCompletedLevel = false;
 		spawnObstacle();
 	}
 }
 
-function resetPlayerValues() {
-	resetPlayerSize();
-	resetPlayerPosition();
-	resetPlayerVelocity();
-	resetPlayerPowerUps();
+function resetPlayerValues(p) {
+	resetPlayerSize(p);
+	resetPlayerPosition(p);
+	resetPlayerVelocity(p);
+	resetPlayerPowerUps(p);
 }
 
-function resetPlayerPosition() {
+function resetPlayerPosition(p) {
 	// centers player since the x,y are in the top left corner
-	player.x = renderer.width / 2 - player.width / 2;
-	player.y = SCREEN_BOTTOM / 2 - player.height / 2;
+	p.x = renderer.width / 2 - p.width / 2;
+	p.y = SCREEN_BOTTOM / 2 - p.height / 2;
 }
 
-function resetPlayerVelocity() {
-	player.xv = 0;
-	player.yv = 0;
+function resetPlayerVelocity(p) {
+	p.xv = 0;
+	p.yv = 0;
 }
 
-function resetPlayerSize() {
-	player.height = DEFAULT_PLAYER_HEIGHT;
-	player.width = DEFAULT_PLAYER_WIDTH;
+function resetPlayerSize(p) {
+	p.height = DEFAULT_PLAYER_HEIGHT;
+	p.width = DEFAULT_PLAYER_WIDTH;
 }
 
-function resetPlayerPowerUps() {
-	player.lasers = false;
+function resetPlayerPowerUps(p) {
+	p.lasers = false;
+	if (p.twin) {
+		p.twin = false;
+		stage.removeChild(player.twinSprite);
+	}
 }
 
 function nextLevel() {
@@ -364,78 +372,62 @@ function loadProgressHandler(loader, resource) {
 
 
 /* -------------- BEGIN rendering -------------- */
-function upPressed() {
-	return keyPressed[WCODE] || keyPressed[UARROW];
-}
-
-function downPressed() {
-	return keyPressed[SCODE] || keyPressed[DARROW];
-}
-
-function leftPressed() {
-	return keyPressed[ACODE] || keyPressed[LARROW];
-}
-
-function rightPressed() {
-	return keyPressed[DCODE] || keyPressed[RARROW];
-}
-
 function spacePressed() {
 	return keyPressed[SPACE];
 }
 
-function updatePlayer() {
+function updatePlayer(p) {
 	// updates velocities based on our accel/deceleration values
 	// so the player's movement is smoother
 	// W
-	if (upPressed()) {
+	if (p.upPressed()) {
 		// accelerate in the negative y direction
-		if (player.yv > MINPVEL) {
-			player.yv -= ACCELERATION;
+		if (p.yv > MINPVEL) {
+			p.yv -= ACCELERATION;
 		}
 	} else {
 		// opposite key wasn't pressed, we slow down
-		if (!downPressed() && player.yv < 0) {
-			player.yv += DECELERATION;
+		if (!p.downPressed() && p.yv < 0) {
+			p.yv += DECELERATION;
 		}
 	}
 
 	// A
-	if (leftPressed()) {
+	if (p.leftPressed()) {
 		// accelerate in the negative x direction
-		if (player.xv > MINPVEL) {
-			player.xv -= ACCELERATION;
+		if (p.xv > MINPVEL) {
+			p.xv -= ACCELERATION;
 		}
 	} else {
 		// opposite key wasn't pressed, we slow down
-		if (!rightPressed() && player.xv < 0) {
-			player.xv += DECELERATION;
+		if (!p.rightPressed() && p.xv < 0) {
+			p.xv += DECELERATION;
 		}
 	}
 
 	// S
-	if (downPressed()) {
+	if (p.downPressed()) {
 		// accelerate in the positive y direction
-		if (player.yv < MAXPVEL) {
-			player.yv += ACCELERATION;
+		if (p.yv < MAXPVEL) {
+			p.yv += ACCELERATION;
 		}
 	} else {
 		// opposite key wasn't pressed, we slow down
-		if (!upPressed() && player.yv > 0) {
-			player.yv -= DECELERATION;
+		if (!p.upPressed() && p.yv > 0) {
+			p.yv -= DECELERATION;
 		}
 	}
 
 	// D
-	if (rightPressed()) {
+	if (p.rightPressed()) {
 		// accelerate in the positive x direction
-		if (player.xv < MAXPVEL) {
-			player.xv += ACCELERATION;
+		if (p.xv < MAXPVEL) {
+			p.xv += ACCELERATION;
 		}
 	} else {
 		// opposite key wasn't pressed, we slow down
-		if (!leftPressed() && player.xv > 0) {
-			player.xv -= DECELERATION;
+		if (!p.leftPressed() && p.xv > 0) {
+			p.xv -= DECELERATION;
 		}
 	}
 
@@ -448,11 +440,11 @@ function updatePlayer() {
 	}
 
 	// updates position
-	player.x += player.xv;
-	player.y += player.yv;
+	p.x += p.xv;
+	p.y += p.yv;
 
 	// maintains bounds
-	maintainPlayerBounds();
+	maintainBounds(p);
 }
 
 function canShootLaser() {
@@ -610,7 +602,7 @@ function trySpawnPowerUp() {
 }
 
 function choosePowerUpType() {
-	return 2;
+	return 3;
 	//return Math.floor(Math.random() * NUM_POWERUPS);
 }
 
@@ -745,31 +737,31 @@ function hitTestRectangle(r1, r2) {
   return hit;
 };
 
-function maintainPlayerBounds() {
+function maintainBounds(p) {
 	// keeps player inside the game screen. resets its velocity if it hits a wall
 
 	// player tries to leave from the top
-	if (player.y < SCREEN_TOP) {
-		player.y = SCREEN_TOP;
-		player.yv = 0;
+	if (p.y < SCREEN_TOP) {
+		p.y = SCREEN_TOP;
+		p.yv = 0;
 	}
 
 	// player tries to leave from the left
-	if (player.x < 0) {
-		player.x = 0;
-		player.xv = 0;
+	if (p.x < 0) {
+		p.x = 0;
+		p.xv = 0;
 	}
 
 	// player tries to leave from the bottom
-	if (player.y > SCREEN_BOTTOM - player.height) {
-		player.y = SCREEN_BOTTOM - player.height;
-		player.yv = 0;
+	if (p.y > SCREEN_BOTTOM - p.height) {
+		p.y = SCREEN_BOTTOM - p.height;
+		p.yv = 0;
 	}
 
 	// player tries to leave from the right
-	if (player.x > renderer.width - player.width) {
-		player.x = renderer.width - player.width;
-		player.xv = 0;
+	if (p.x > renderer.width - p.width) {
+		p.x = renderer.width - p.width;
+		p.xv = 0;
 	}
 }
 
@@ -801,9 +793,15 @@ function playerCircleCollision(p, o) {
 		|| hitTestRectCircle(horizontalHitbox, obstacleHitbox);
 }
 
+function obstacleCollision(obstacle) {
+	// player or its twin (if active) hit an obstacle
+	return playerCircleCollision(player, obstacle)
+		|| (player.twin && playerCircleCollision(player.twinSprite, obstacle));
+}
+
 function checkObstacleBounds(obstacle) {
 	// player hit the obstacle
-	if (playerCircleCollision(player, obstacle)) {
+	if (obstacleCollision(obstacle)) {
 		loseLife();
 	} else if (objectOutOfRange(obstacle)) {
 		// obstacle has left the screen, remove it
@@ -865,6 +863,9 @@ function consumePowerUp(powerUp) {
 		case PowerUpType.LASERS:
 			addPlayerLasers();
 			break;
+		case PowerUpType.TWIN:
+			addTwin();
+			break;
 	}
 
 	// power up only lasts for a certain amount of time
@@ -887,11 +888,24 @@ function resetPlayerPowerUp(type) {
 		}
 	} else if (type === PowerUpType.LASERS) {
 		player.lasers = false;
+	} else if (type === PowerUpType.TWIN) {
+		player.twin = false;
+		stage.removeChild(player.twinSprite);
 	}
 }
 
 function addPlayerLasers() {
 	player.lasers = true;
+}
+
+function addTwin() {
+	// only can have one twin
+	if (!player.twin) {
+		player.twin = true;
+		player.twinSprite.x = player.x;
+		player.twinSprite.y = player.y;
+		stage.addChild(player.twinSprite);
+	}
 }
 
 function halfPlayerSize() {
@@ -975,11 +989,58 @@ function createPlayer() {
 		loader.resources["img/rocket.png"].texture
 	);
 
+	player.upPressed = function () {
+		return keyPressed[WCODE];
+	}
+
+	player.rightPressed = function() {
+		return keyPressed[DCODE];
+	}
+
+	player.leftPressed = function() {
+		return keyPressed[ACODE];
+	}
+
+	player.downPressed = function() {
+		return keyPressed[SCODE];
+	}
+
+	player.twinSprite = createTwinSprite();
+
 	// puts player in the middle of the screen
-	resetPlayerValues();
+	resetPlayerValues(player);
 
 	// add player to screen
 	stage.addChild(player);
+}
+
+function createTwinSprite() {
+	let twin = new Sprite(
+		loader.resources["img/rocket.png"].texture
+	);
+
+	twin.upPressed = function() {
+		return keyPressed[UARROW];
+	}
+
+	twin.rightPressed = function() {
+		return keyPressed[RARROW];
+	}
+
+	twin.leftPressed = function() {
+		return keyPressed[LARROW];
+	}
+
+	twin.downPressed = function() {
+		return keyPressed[DARROW];
+	}
+
+	// resets twin's values but puts it on top of player
+	resetPlayerValues(twin);
+
+	// doesn't yet add it to the screen
+	return twin;
+
 }
 
 function createObstacle() {
