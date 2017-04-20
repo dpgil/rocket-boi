@@ -49,8 +49,6 @@ var startButton;
 var infoBar;
 // text sprite displayed to the user
 var mainMessage = "";
-// text sprite handling user lives
-var lifeMessage = "";
 // text sprite handling current level
 var levelMessage = "";
 // text sprite handling obstacle count
@@ -65,6 +63,8 @@ var canSpawn = [];
 var powerUps = [];
 // lasers flying around
 var lasers = [];
+// life sprites
+var lifeSprites = [];
 // keeps track of recently lost life
 var recentlyLostLife = false;
 // keeps track of laser shots
@@ -107,7 +107,7 @@ var MINPVEL = -5;
 var ACCELERATION = 0.2;
 var DECELERATION = 0.05;
 
-var INFO_BAR_HEIGHT = 50;
+var INFO_BAR_HEIGHT = 65;
 var SCREEN_TOP = 0;
 var SCREEN_BOTTOM = renderer.height - INFO_BAR_HEIGHT;
 var BORDER_SIZE = 7;
@@ -238,6 +238,10 @@ function updateBackground() {
 
 function updateInfoBar() {
 	infoBar.parent.addChild(infoBar);
+
+	lifeSprites.forEach(function(lifeSprite) {
+		lifeSprite.parent.addChild(lifeSprite);
+	});
 }
 
 function resetGameState() {
@@ -495,13 +499,16 @@ function clearScreen() {
 	// remove message and player
 	stage.removeChild(mainMessage);
 	stage.removeChild(startButton);
-	stage.removeChild(lifeMessage);
 	stage.removeChild(levelMessage);
 	stage.removeChild(obstacleMessage);
 	stage.removeChild(player);
 
 	clearObstacles();
 	clearPowerUps();
+}
+
+function removeLifeSprite() {
+	lifeSprites.pop();
 }
 
 function removeObstacle(obstacle) {
@@ -545,7 +552,10 @@ function incrementLevelCount() {
 
 function decrementLifeCount() {
 	lives--;
-	updateLifeMessage();
+	
+	// remove life sprite and render
+	removeLifeSprite();
+	updateInfoBar();
 }
 
 function incrementObstaclesPassed() {
@@ -557,10 +567,6 @@ function resetObstacleCount() {
 	obstaclesPassed = 0;
 	obstaclesSpawned = 0;
 	updateObstacleMessage();
-}
-
-function updateLifeMessage() {
-	lifeMessage.text = "Lives: " + lives;
 }
 
 function updateLevelMessage() {
@@ -930,12 +936,38 @@ function createInfoBar() {
 	infoBar = new Graphics();
 
 	// sets its values
-	infoBar.beginFill(0x1C2833);
+	infoBar.beginFill(0x000000);
 	infoBar.drawRect(0,SCREEN_BOTTOM,renderer.width,renderer.height);
 	infoBar.endFill();
 
+	// add info bar text and sprites
+	createInfoBarSprites();
+
 	// adds it to the screen
 	stage.addChild(infoBar);
+}
+
+function createInfoBarSprites() {
+	// adds 3 life sprites
+	let i;
+	for (i = 0; i < lives; i++) {
+		let lifeSprite = new Sprite(
+			loader.resources["img/rocket.png"].texture
+		);
+
+		lifeSprite.height = INFO_BAR_HEIGHT - BORDER_SIZE;
+		lifeSprite.width = lifeSprite.height * (600/872);
+
+		lifeSprite.x = i * lifeSprite.width + i*BORDER_SIZE;
+		lifeSprite.y = SCREEN_BOTTOM + BORDER_SIZE;
+
+		lifeSprite.visible = true;
+
+		lifeSprites.push(lifeSprite);
+
+		stage.addChild(lifeSprite);
+	}
+
 }
 
 function createPlayer() {
@@ -1083,24 +1115,6 @@ function createBackground() {
 	stage.addChild(far);
 }
 
-function createLifeMessage() {
-	// creates the text sprite
-	lifeMessage = new Text("Lives: 3", 
-		{
-			fontFamily: "Arial", 
-			fontSize: 32, 
-			fill: "white"
-		}
-	);
-
-	// set text position
-	lifeMessage.x = BORDER_SIZE;
-	lifeMessage.y = BORDER_SIZE;
-
-	// adds it to the stage
-	stage.addChild(lifeMessage);
-}
-
 function createLevelMessage() {
 	// creates the text sprite
 	levelMessage = new Text("Level: 1",
@@ -1113,7 +1127,7 @@ function createLevelMessage() {
 
 	// set text position
 	levelMessage.x = BORDER_SIZE;
-	levelMessage.y = BORDER_SIZE + lifeMessage.height + BORDER_SIZE;
+	levelMessage.y = BORDER_SIZE;
 
 	// adds it to the stage
 	stage.addChild(levelMessage);
@@ -1163,7 +1177,6 @@ function createStartButton() {
 }
 
 function createMessageSprites() {
-	createLifeMessage();
 	createLevelMessage();
 	createObstacleMessage();
 }
