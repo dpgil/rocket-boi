@@ -14,7 +14,7 @@ var renderer = autoDetectRenderer(1000, 600, {backgroundColor : 0x0a3e74});
 renderer.view.style.position = "absolute";
 renderer.view.style.display = "block";
 renderer.autoResize = true;
-renderer.resize(window.innerWidth, window.innerHeight-50);
+renderer.resize(window.innerWidth, window.innerHeight);
 
 // create the stage
 var stage = new Container();
@@ -201,6 +201,7 @@ function play() {
 	// game is not over, continue letting user move the player
 	} else {
 		updateBackground();
+		updateInfoBar();
 
 		// pauses player and obstacles if a level was just lost
 		if (!recentlyLostLife) {
@@ -233,6 +234,10 @@ function updateScreenObjects() {
 
 function updateBackground() {
 	far.tilePosition.y += 0.5;
+}
+
+function updateInfoBar() {
+	infoBar.parent.addChild(infoBar);
 }
 
 function resetGameState() {
@@ -922,7 +927,7 @@ function constructSpawnLocations() {
 
 function createInfoBar() {
 	// creates the graphics object
-	var infoBar = new Graphics();
+	infoBar = new Graphics();
 
 	// sets its values
 	infoBar.beginFill(0x1C2833);
