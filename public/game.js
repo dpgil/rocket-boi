@@ -83,6 +83,8 @@ var MINPVEL = -5;
 var ACCELERATION = 0.5;
 var DECELERATION = 0.25;
 
+var BORDERSIZE = 7;
+
 // obstacle movement
 var maxovel = [0, 5, 6, 6, 7, 7, 8, 8, 9, 10, 12];
 var minovel = [0, 4, 4, 3, 3, 3, 3, 3, 4, 5, 5];
@@ -604,7 +606,7 @@ function maintainPlayerBounds() {
 
 function checkObstacleBounds(obstacle) {
 	// player hit the obstacle
-	if (hitTestRectangle(player, obstacle)) {
+	if (hitTestRectCircle(player, obstacle)) {
 		loseLife();
 	} else if (obstacleOutOfRange(obstacle)) {
 		// obstacle has left the screen, remove it
@@ -619,7 +621,7 @@ function checkObstacleBounds(obstacle) {
 }
 
 function obstacleOutOfRange(obstacle) {
-	return obstacle.y > renderer.height + obstacle.radius;
+	return obstacle.y > renderer.height + obstacle.height/2;
 }
 /* -------------- END collision -------------- */
 
@@ -649,6 +651,9 @@ function createPlayer() {
 	player.height = pside * (872/600);
 	player.width = pside;
 
+	player.anchor.x = 0.5;
+	player.anchor.y = 0.5;
+
 	// puts player in the middle of the screen
 	resetPlayer();
 
@@ -673,7 +678,7 @@ function createObstacle() {
 
 	obstacle.height = oside * 2;
 	obstacle.width = oside * 2;
-	obstacle.radius = oside;
+	obstacle.radius = oside * 0.8;
 
 	obstacle.anchor.x = 0.5;
 	obstacle.anchor.y = 0.5;
@@ -741,8 +746,8 @@ function createLifeMessage() {
 	);
 
 	// set text position
-	lifeMessage.x = 7;
-	lifeMessage.y = 7;
+	lifeMessage.x = BORDERSIZE;
+	lifeMessage.y = BORDERSIZE;
 
 	// adds it to the stage
 	stage.addChild(lifeMessage);
@@ -759,8 +764,8 @@ function createLevelMessage() {
 	);
 
 	// set text position
-	levelMessage.x = 7;
-	levelMessage.y = 7 + lifeMessage.height + 7;
+	levelMessage.x = BORDERSIZE;
+	levelMessage.y = BORDERSIZE + lifeMessage.height + BORDERSIZE;
 
 	// adds it to the stage
 	stage.addChild(levelMessage);
@@ -777,8 +782,8 @@ function createObstacleMessage() {
 	);
 
 	// set text position
-	obstacleMessage.x = 7;
-	obstacleMessage.y = levelMessage.y + levelMessage.height + 7;
+	obstacleMessage.x = BORDERSIZE;
+	obstacleMessage.y = levelMessage.y + levelMessage.height + BORDERSIZE;
 
 	// add to the stage
 	stage.addChild(obstacleMessage);
