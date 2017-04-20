@@ -83,7 +83,13 @@ var UARROW = 38;
 var DARROW = 40;
 var SPACE = 32;
 
-var OBSTACLELOCATIONS = 9;
+// enum for powerup types
+var PowerUpType = {
+	HALFSIZE : 0,
+	DOUBLESIZE : 1
+};
+var NUMPOWERUPS = 2;
+var POWERUPDURATION = 5000;
 
 // player movement
 var MAXPVEL = 5;
@@ -92,6 +98,7 @@ var ACCELERATION = 0.5;
 var DECELERATION = 0.25;
 
 var BORDERSIZE = 7;
+var OBSTACLELOCATIONS = 9;
 
 // obstacle movement
 var maxovel = [0, 5, 6, 6, 7, 7, 8, 8, 9, 10, 12];
@@ -236,6 +243,7 @@ function restartLife() {
 	obstaclesSpawned -= obstacles.length;
 
 	clearObstacles();
+	clearPowerUps();
 	recentlyLostLife = false;
 
 	if (!checkCompletedLevel()) {
@@ -508,9 +516,12 @@ function trySpawnPowerUp() {
 
 	// lucky number
 	if (rand === 7) {
-		console.log("lucky boi");
 		createPowerUp();
 	}
+}
+
+function choosePowerUpType() {
+	return Math.floor(Math.random() * (NUMPOWERUPS + 1));
 }
 
 function chooseSpawnLocationIndex() {
@@ -554,7 +565,10 @@ function randomSpawnTime() {
 }
 
 function canSpawnObstacle() {
-	return !gameOver && !recentlyLostLife && !recentlyCompletedLevel && obstaclesSpawned < levelObstacles[level];
+	return !gameOver 
+		&& !recentlyLostLife 
+		&& !recentlyCompletedLevel 
+		&& obstaclesSpawned < levelObstacles[level];
 }
 /* -------------- END rendering -------------- */
 
@@ -693,7 +707,8 @@ function playerCircleCollision(p, o) {
 		radius : o.radius
 	};
 
-	return hitTestRectCircle(verticalHitbox, obstacleHitbox) || hitTestRectCircle(horizontalHitbox, obstacleHitbox);
+	return hitTestRectCircle(verticalHitbox, obstacleHitbox) 
+		|| hitTestRectCircle(horizontalHitbox, obstacleHitbox);
 }
 
 function checkObstacleBounds(obstacle) {
@@ -715,15 +730,41 @@ function checkObstacleBounds(obstacle) {
 function checkPowerUpBounds(powerUp) {
 	if (playerCircleCollision(player, powerUp)) {
 		// do what power up do
-		removePowerUp(powerUp);
-		halfPlayerSize();
-		setTimeout(doublePlayerSize, 8000);
+		consumePowerUp(powerUp);
 	} else if (objectOutOfRange(powerUp)) {
 		removePowerUp(powerUp);
 	}
 }
 
+function consumePowerUp(powerUp) {
+	// remove it from our internal list and the screen
+	removePowerUp(powerUp);
+
+	// executes power up depending on type
+	switch(powerUp.type) {
+		case PowerUpType.HALFSIZE:
+			halfSizePowerUp();
+			break;
+		case PowerUpType.DOUBLESIZE:
+			doubleSizePowerUp();
+			break;
+	}
+}
+
+function halfSizePowerUp() {
+	halfPlayerSize();
+	setTimeout(doublePlayerSize, POWERUPDURATION);
+}
+
+function doubleSizePowerUp() {
+	doublePlayerSize();
+	setTimeout(halfPlayerSize, POWERUPDURATION);
+}
+
 function halfPlayerSize() {
+	// temporarily sets player anchor to center
+	// so the size change is centered, then resets
+	// TODO NOT SURE IF THIS ACTUALLY HELPS --------------------------------
 	player.height = player.height / 2;
 	player.width = player.width / 2;
 }
@@ -822,6 +863,11 @@ function createPowerUp() {
 
 	// creates the graphics object
 	let powerUp = new Graphics();
+
+	// decides on the type of powerup
+	powerUp.type = choosePowerUpType();
+
+	// construct the physical features
 	powerUp.radius = 20;
 	powerUp.beginFill(0xf08080);
 	powerUp.drawCircle(0,0,powerUp.radius);
