@@ -382,7 +382,7 @@ function updatePlayer() {
 function updateObstacles() {
 	obstacles.forEach(function(obstacle) {
 		// render obstacle
-		obstacle.moveUp();
+		obstacle.move();
 		obstacle.rotation += obstacle.rotationSpeed;
 
 		// removes obstacle if its off the screen
@@ -394,7 +394,7 @@ function updateObstacles() {
 function updatePowerUps() {
 	powerUps.forEach(function(powerUp) {
 		// render powerup
-		powerUp.moveUp();
+		powerUp.move();
 
 		// removes powerup if it's off the screen
 		checkPowerUpBounds(powerUp);		
@@ -416,6 +416,7 @@ function clearScreen() {
 	stage.removeChild(player);
 
 	clearObstacles();
+	clearPowerUps();
 }
 
 function removeObstacle(obstacle) {
@@ -437,6 +438,13 @@ function clearObstacles() {
 		stage.removeChild(obstacle);
 	});
 	obstacles = [];
+}
+
+function clearPowerUps() {
+	powerUps.forEach(function(powerUp) {
+		stage.removeChild(powerUp);
+	});
+	powerUps = [];
 }
 
 function incrementLevelCount() {
@@ -496,7 +504,7 @@ function spawnObstacle() {
 function trySpawnPowerUp() {
 	// generates random number to see if power up
 	// should be spawned
-	let rand = Math.floor(Math.random() * 10);
+	let rand = Math.floor(Math.random() * 20);
 
 	// lucky number
 	if (rand === 7) {
@@ -661,10 +669,10 @@ function maintainPlayerBounds() {
 	}
 }
 
-function playerObstacleCollision(p, o) {
-	// detects collision between player and obstacle
+function playerCircleCollision(p, o) {
+	// detects collision between player rocket and circle
 	// splits player up into two hitboxes
-	// checks if either of those collide with the asteroids hitbox
+	// checks if either of those collide with the circle hitbox
 	let verticalHitbox = { 
 		height : p.height,
 		width : p.width / 3,
@@ -682,7 +690,7 @@ function playerObstacleCollision(p, o) {
 	let obstacleHitbox = {
 		x : o.x,
 		y : o.y,
-		radius : o.radius * 0.8
+		radius : o.radius
 	};
 
 	return hitTestRectCircle(verticalHitbox, obstacleHitbox) || hitTestRectCircle(horizontalHitbox, obstacleHitbox);
@@ -690,8 +698,7 @@ function playerObstacleCollision(p, o) {
 
 function checkObstacleBounds(obstacle) {
 	// player hit the obstacle
-	if (playerObstacleCollision(player, obstacle)) {
-		console.log("player obstacle collision");
+	if (playerCircleCollision(player, obstacle)) {
 		loseLife();
 	} else if (objectOutOfRange(obstacle)) {
 		// obstacle has left the screen, remove it
@@ -706,13 +713,28 @@ function checkObstacleBounds(obstacle) {
 }
 
 function checkPowerUpBounds(powerUp) {
-	if (objectOutOfRange(powerUp)) {
+	if (playerCircleCollision(player, powerUp)) {
+		// do what power up do
+		removePowerUp(powerUp);
+		halfPlayerSize();
+		setTimeout(doublePlayerSize, 8000);
+	} else if (objectOutOfRange(powerUp)) {
 		removePowerUp(powerUp);
 	}
 }
 
+function halfPlayerSize() {
+	player.height = player.height / 2;
+	player.width = player.width / 2;
+}
+
+function doublePlayerSize() {
+	player.height = player.height * 2;
+	player.width = player.width * 2;
+}
+
 function objectOutOfRange(obstacle) {
-	return obstacle.y > renderer.height + obstacle.radius;
+	return obstacle.y > renderer.height + obstacle.height;
 }
 /* -------------- END collision -------------- */
 
@@ -766,7 +788,7 @@ function createObstacle() {
 
 	obstacle.height = oside * 2;
 	obstacle.width = oside * 2;
-	obstacle.radius = oside;
+	obstacle.radius = oside * 0.8;
 
 	obstacle.anchor.x = 0.5;
 	obstacle.anchor.y = 0.5;
@@ -778,9 +800,9 @@ function createObstacle() {
 	obstacle.y = 0 - obstacle.height;
 
 	// adds obstacle movement
-	obstacle.speed = -1 * randomObstacleSpeed();
-	obstacle.moveUp = function() {
-		obstacle.y -= obstacle.speed;
+	obstacle.speed = randomObstacleSpeed();
+	obstacle.move = function() {
+		obstacle.y += obstacle.speed;
 	}
 
 	// add obstacle to the list
@@ -800,16 +822,16 @@ function createPowerUp() {
 
 	// creates the graphics object
 	let powerUp = new Graphics();
-	powerUp.radius = 30;
-	powerUp.setFill(0xf08080);
+	powerUp.radius = 20;
+	powerUp.beginFill(0xf08080);
 	powerUp.drawCircle(0,0,powerUp.radius);
 	powerUp.endFill();
 	powerUp.x = spawnLocations[ri];
 	powerUp.y = 0 - powerUp.radius;
 
-	powerUp.speed = 5;
-	powerUp.moveUp = function() {
-		powerUp.y -= powerUp.speed;
+	powerUp.speed = 3;
+	powerUp.move = function() {
+		powerUp.y += powerUp.speed;
 	}
 
 	// add powerup to the list
