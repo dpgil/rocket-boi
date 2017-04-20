@@ -41,6 +41,8 @@ var obstaclesPassed = 0;
 var obstaclesSpawned = 0;
 // main player sprite
 var player;
+// panning background
+var far;
 // main menu start button
 var startButton;
 // text sprite displayed to the user
@@ -57,6 +59,8 @@ var obstacles = [];
 var spawnLocations = [];
 // list of if obstacles can be spawned
 var canSpawn = [];
+// power up item
+var powerUps = [];
 // keeps track of recently lost life
 var recentlyLostLife = false;;
 // keeps track if a level was just completed
@@ -103,8 +107,6 @@ var levelObstacles = [0, 25, 50, 100, 150, 200, 250, 300, 400, 500, 1000];
 var obstacleColors = [0x000000, 0xF4D03F, 0x2ECC71, 0X3498DB, 0X8E44AD, 0X2C3E50, 0XECF0F1, 0XE67E22, 0XFA8072, 0XFE2EF7, 0X190707];
 /* -------------- END constants -------------- */
 
-
-var far;
 
 
 /* -------------- BEGIN setup and game state functions -------------- */
@@ -178,6 +180,9 @@ function play() {
 
 			// move obstacles
 			updateObstacles();
+
+			// move powerups
+			updatePowerUps();
 		}
 
 		// just completed a level
@@ -386,6 +391,16 @@ function updateObstacles() {
 	});
 }
 
+function updatePowerUps() {
+	powerUps.forEach(function(powerUp) {
+		// render powerup
+		powerUp.moveUp();
+
+		// removes powerup if it's off the screen
+		checkPowerUpBounds(powerUp);		
+	});
+}
+
 function clearScreen() {
 	// even after removing from screen, the button still is clickable
 	// for now, move it completely off the screen
@@ -408,6 +423,13 @@ function removeObstacle(obstacle) {
 	let index = obstacles.indexOf(obstacle);
 	obstacles.splice(index, 1);
 	stage.removeChild(obstacle);
+}
+
+function removePowerUp(powerUp) {
+	// removes powerup from our internal list and the screen
+	let index = powerUps.indexOf(powerUp);
+	powerUps.splice(index, 1);
+	stage.removeChild(powerUp);
 }
 
 function clearObstacles() {
@@ -462,9 +484,24 @@ function spawnObstacle() {
 		createObstacle();
 		obstaclesSpawned++;
 
+		// tries random number to see if a power up should be spawned
+		trySpawnPowerUp();
+
 		// spawns another obstacle in a random time
 		let t = randomSpawnTime();
 		setTimeout(spawnObstacle, t);
+	}
+}
+
+function trySpawnPowerUp() {
+	// generates random number to see if power up
+	// should be spawned
+	let rand = Math.floor(Math.random() * 10);
+
+	// lucky number
+	if (rand === 7) {
+		console.log("lucky boi");
+		createPowerUp();
 	}
 }
 
@@ -656,7 +693,7 @@ function checkObstacleBounds(obstacle) {
 	if (playerObstacleCollision(player, obstacle)) {
 		console.log("player obstacle collision");
 		loseLife();
-	} else if (obstacleOutOfRange(obstacle)) {
+	} else if (objectOutOfRange(obstacle)) {
 		// obstacle has left the screen, remove it
 		removeObstacle(obstacle);
 
@@ -668,7 +705,13 @@ function checkObstacleBounds(obstacle) {
 	}
 }
 
-function obstacleOutOfRange(obstacle) {
+function checkPowerUpBounds(powerUp) {
+	if (objectOutOfRange(powerUp)) {
+		removePowerUp(powerUp);
+	}
+}
+
+function objectOutOfRange(obstacle) {
 	return obstacle.y > renderer.height + obstacle.radius;
 }
 /* -------------- END collision -------------- */
@@ -745,6 +788,35 @@ function createObstacle() {
 
 	// add obstacle to the stage
 	stage.addChild(obstacle);
+}
+
+function createPowerUp() {
+	// chooses a random spawn location of the available locations
+	let ri = chooseSpawnLocationIndex();
+	// no available locations at the moment
+	if (ri === -1) {
+		return;
+	}
+
+	// creates the graphics object
+	let powerUp = new Graphics();
+	powerUp.radius = 30;
+	powerUp.setFill(0xf08080);
+	powerUp.drawCircle(0,0,powerUp.radius);
+	powerUp.endFill();
+	powerUp.x = spawnLocations[ri];
+	powerUp.y = 0 - powerUp.radius;
+
+	powerUp.speed = 5;
+	powerUp.moveUp = function() {
+		powerUp.y -= powerUp.speed;
+	}
+
+	// add powerup to the list
+	powerUps.push(powerUp);
+
+	// add power up to the stage
+	stage.addChild(powerUp);
 }
 
 function createText(s) {
