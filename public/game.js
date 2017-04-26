@@ -241,6 +241,7 @@ function updateBackground() {
 }
 
 function updateInfoBar() {
+	console.log("updating info bar");
 	infoBar.parent.addChild(infoBar);
 
 	lifeSprites.forEach(function(lifeSprite) {
@@ -286,6 +287,7 @@ function restartLife() {
 
 	clearObstacles();
 	clearPowerUps();
+	clearLasers();
 	recentlyLostLife = false;
 
 	if (!checkCompletedLevel()) {
@@ -497,6 +499,7 @@ function clearScreen() {
 
 	clearObstacles();
 	clearPowerUps();
+	clearLasers();
 }
 
 function removeLifeSprite() {
@@ -535,6 +538,13 @@ function clearPowerUps() {
 		stage.removeChild(powerUp);
 	});
 	powerUps = [];
+}
+
+function clearLasers() {
+	lasers.forEach(function(laser) {
+		stage.removeChild(laser);
+	});
+	lasers = [];
 }
 
 function incrementLevelCount() {
@@ -602,8 +612,8 @@ function trySpawnPowerUp() {
 }
 
 function choosePowerUpType() {
-	return 3;
-	//return Math.floor(Math.random() * NUM_POWERUPS);
+	//return 3;
+	return Math.floor(Math.random() * NUM_POWERUPS);
 }
 
 function chooseSpawnLocationIndex() {
@@ -957,11 +967,18 @@ function createInfoBar() {
 	// add info bar text and sprites
 	createInfoBarSprites();
 
+	console.log("Adding info bar to stage");
 	// adds it to the screen
 	stage.addChild(infoBar);
 }
 
 function createInfoBarSprites() {
+	createLifeSprites();
+	//createObstacleMessage();
+	//createLevelMessage();
+}
+
+function createLifeSprites() {
 	// adds 3 life sprites
 	let i;
 	for (i = 0; i < lives; i++) {
@@ -981,7 +998,6 @@ function createInfoBarSprites() {
 
 		stage.addChild(lifeSprite);
 	}
-
 }
 
 function createPlayer() {
@@ -1037,6 +1053,8 @@ function createTwinSprite() {
 
 	// resets twin's values but puts it on top of player
 	resetPlayerValues(twin);
+
+	twin.tint = 0x7F8C8D;
 
 	// doesn't yet add it to the screen
 	return twin;
