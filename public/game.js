@@ -285,17 +285,17 @@ function restartLife() {
 	// need to respawn the ones on the screen that the user hasn't passed
 	obstaclesSpawned -= obstacles.length;
 
-	clearObstacles();
-	clearPowerUps();
-	clearLasers();
+	// restarting the life
 	recentlyLostLife = false;
 
-	if (!checkCompletedLevel()) {
-		resetPlayerValues(player);
+	// clears the screen objects
+	removePowerUpObjects();
 
-		recentlyCompletedLevel = false;
-		spawnObstacle();
-	}
+	// resets player size, powerups, and position
+	resetPlayerValues(player);
+
+	// kicks off new obstacles
+	spawnObstacle();
 }
 
 function resetPlayerValues(p) {
@@ -327,6 +327,8 @@ function resetPlayerPowerUps(p) {
 		p.twin = false;
 		stage.removeChild(player.twinSprite);
 	}
+
+	resetPlayerSize(p);
 }
 
 function nextLevel() {
@@ -352,13 +354,12 @@ function checkCompletedLevel() {
 		// stops spawning new obstacles, allows the
 		// current obstacles on the screen to clear
 		recentlyCompletedLevel = true;
+
+		// takes away all power ups from player
+		resetPlayerPowerUps(player);
+
 		createText("Level "+level+" complete! Press space to advance to the next level");
-
-		return true;
-	// advance to the next level
 	}
-
-	return false;
 }
 
 // progress handler
@@ -497,9 +498,7 @@ function clearScreen() {
 	stage.removeChild(obstacleMessage);
 	stage.removeChild(player);
 
-	clearObstacles();
-	clearPowerUps();
-	clearLasers();
+	removePowerUpObjects();
 }
 
 function removeLifeSprite() {
@@ -524,6 +523,12 @@ function removeLaser(laser) {
 	let index = lasers.indexOf(laser);
 	lasers.splice(index, 1);
 	stage.removeChild(laser);
+}
+
+function removePowerUpObjects() {
+	clearObstacles();
+	clearPowerUps();
+	clearLasers();
 }
 
 function clearObstacles() {
@@ -967,7 +972,6 @@ function createInfoBar() {
 	// add info bar text and sprites
 	createInfoBarSprites();
 
-	console.log("Adding info bar to stage");
 	// adds it to the screen
 	stage.addChild(infoBar);
 }
