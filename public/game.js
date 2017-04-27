@@ -185,7 +185,7 @@ function startGame() {
 	createPlayer();
 
 	// adds or updates the life and level message sprites
-	createMessageSprites();
+	//createMessageSprites();
 
 	// begins spawning obstacles in 1 sec
 	setTimeout(spawnObstacle, 1000);
@@ -247,6 +247,9 @@ function updateInfoBar() {
 	lifeSprites.forEach(function(lifeSprite) {
 		lifeSprite.parent.addChild(lifeSprite);
 	});
+
+	obstacleMessage.parent.addChild(obstacleMessage);
+	//levelMessage.parent.addChild(levelMessage);
 }
 
 function resetGameState() {
@@ -978,7 +981,7 @@ function createInfoBar() {
 
 function createInfoBarSprites() {
 	createLifeSprites();
-	//createObstacleMessage();
+	createObstacleMessage();
 	//createLevelMessage();
 }
 
@@ -1203,14 +1206,16 @@ function createLevelMessage() {
 	levelMessage = new Text("Level: 1",
 		{
 			fontFamily: "Arial",
-			fontSize: 32,
+			fontSize: 50,
 			fill: "white"
 		}
 	);
 
 	// set text position
-	levelMessage.x = BORDER_SIZE;
-	levelMessage.y = BORDER_SIZE;
+	levelMessage.x = obstacleMessage.x + obstacleMessage.width + BORDER_SIZE*3;//BORDER_SIZE;
+	levelMessage.y = SCREEN_BOTTOM + BORDER_SIZE;//levelMessage.y + levelMessage.height + BORDER_SIZE;
+	levelMessage.height = lifeSprites[2].height;
+	levelMessage.width = levelMessage.height * 2;
 
 	// adds it to the stage
 	stage.addChild(levelMessage);
@@ -1221,14 +1226,17 @@ function createObstacleMessage() {
 	obstacleMessage = new Text(obstaclesPassed + "/" + levelObstacles[level],
 		{
 			fontFamily: "Arial",
-			fontSize: 32,
+			fontSize: 50,
 			fill: "white"
 		}	
 	);
 
 	// set text position
-	obstacleMessage.x = BORDER_SIZE;
-	obstacleMessage.y = levelMessage.y + levelMessage.height + BORDER_SIZE;
+	obstacleMessage.x = lifeSprites[2].x + lifeSprites[2].width + BORDER_SIZE*3;//BORDER_SIZE;
+	obstacleMessage.y = SCREEN_BOTTOM + BORDER_SIZE;//levelMessage.y + levelMessage.height + BORDER_SIZE;
+	obstacleMessage.height = lifeSprites[2].height;
+	obstacleMessage.width = obstacleMessage.height * 1.6;
+
 
 	// add to the stage
 	stage.addChild(obstacleMessage);
@@ -1257,11 +1265,6 @@ function createStartButton() {
 	}
 
 	stage.addChild(startButton);
-}
-
-function createMessageSprites() {
-	createLevelMessage();
-	createObstacleMessage();
 }
 
 function createMainMenuButtons() {
