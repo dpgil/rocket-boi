@@ -31,20 +31,16 @@ var t = new Tink(PIXI, renderer.view);
 /* -------------- BEGIN game variables -------------- */
 // keeps track of the game state
 var gameOver = true;
-// keeps track of game version
-var twoPlayer;
 // current level
 var level = 0;
 // lives left
 var lives = 3;
-var p2lives = 3;
 // current obstacles allowed to pass
 var obstaclesPassed = 0;
 // current obstacles that have been spawned
 var obstaclesSpawned = 0;
 // main player sprite
 var player;
-var player2;
 // panning background
 var far;
 // main menu start button
@@ -69,7 +65,6 @@ var powerUps = [];
 var lasers = [];
 // life sprites
 var lifeSprites = [];
-var p2lifeSprites = [];
 // keeps track of recently lost life
 var recentlyLostLife = false;
 // keeps track of laser shots
@@ -88,7 +83,6 @@ var WCODE = 87;
 var ACODE = 65;
 var SCODE = 83;
 var DCODE = 68;
-var LCODE = 76;
 var LARROW = 37;
 var RARROW = 39;
 var UARROW = 38;
@@ -165,7 +159,7 @@ function gameLoop() {
 	requestAnimationFrame(gameLoop);
 
 	// handles user input
-	handleUserInput();
+	play();
 
 	// update tink for button
 	// could improve render speed by not updating tink when no button is displayed
@@ -173,22 +167,6 @@ function gameLoop() {
 
 	// renders the content on the screen
 	renderer.render(stage);
-}
-
-function handleUserInput() {
-	if (gameOver) {
-		// start the game over
-		if (spacePressed()) {
-			// start level 1
-			twoPlayer = false;
-			startGame();
-		} else if (keyPressed[WCODE]) {
-			twoPlayer = true;
-			startGame();
-		}	
-	} else {
-		play();
-	}
 }
 
 function startGame() {
@@ -205,9 +183,6 @@ function startGame() {
 
 	// creates the player
 	createPlayer();
-	if (twoPlayer) {
-		createPlayer2();
-	}
 
 	// adds or updates the life and level message sprites
 	//createMessageSprites();
@@ -217,12 +192,18 @@ function startGame() {
 }
 
 function play() {
-	updateBackground();
-	updateInfoBar();
-
-	if (twoPlayer) {
-		updateScreenObjects();
+	// game is over, waiting for user to press space to play again
+	if (gameOver) {
+		// start the game over
+		if (spacePressed()) {
+			// start level 1
+			startGame();
+		}
+	// game is not over, continue letting user move the player
 	} else {
+		updateBackground();
+		updateInfoBar();
+
 		// pauses player and obstacles if a level was just lost
 		if (!recentlyLostLife) {
 			updateScreenObjects();
@@ -240,7 +221,10 @@ function play() {
 
 function updateScreenObjects() {
 	// handle player movement
-	updatePlayers();
+	updatePlayer(player);
+	if (player.twin) {
+		updatePlayer(player.twinSprite);
+	}
 
 	// move obstacles
 	updateObstacles();
@@ -252,36 +236,19 @@ function updateScreenObjects() {
 	updateLasers();
 }
 
-function updatePlayers() {
-	updatePlayer(player);
-	if (player.twin) {
-		updatePlayer(player.twinSprite);
-	}
-
-	if (twoPlayer) {
-		updatePlayer(player2);
-	}
-}
-
 function updateBackground() {
 	far.tilePosition.y += 0.5;
 }
 
 function updateInfoBar() {
+	//console.log("updating info bar");
 	infoBar.parent.addChild(infoBar);
 
 	lifeSprites.forEach(function(lifeSprite) {
 		lifeSprite.parent.addChild(lifeSprite);
 	});
 
-	if (twoPlayer) {
-		p2lifeSprites.forEach(function(lifeSprite) {
-			lifeSprite.parent.addChild(lifeSprite);
-		});
-	} else {
-		obstacleMessage.parent.addChild(obstacleMessage);
-	}
-
+	obstacleMessage.parent.addChild(obstacleMessage);
 	//levelMessage.parent.addChild(levelMessage);
 }
 
@@ -290,15 +257,10 @@ function resetGameState() {
 	recentlyLostLife = false;
 	recentlyCompletedLevel = false;
 
+	level = 1;
 	lives = 3;
-
-	if (twoPlayer) {
-		p2lives = 3;
-	} else {
-		level = 1;
-		obstaclesPassed = 0;
-		obstaclesSpawned = 0;
-	}
+	obstaclesPassed = 0;
+	obstaclesSpawned = 0;
 }
 
 function endGame() {
@@ -358,22 +320,15 @@ function resetPlayerVelocity(p) {
 }
 
 function resetPlayerSize(p) {
-	if (twoPlayer) {
-		p.height = DEFAULT_PLAYER_WIDTH;
-		p.width = DEFAULT_PLAYER_HEIGHT;
-	} else {
-		p.height = DEFAULT_PLAYER_HEIGHT;
-		p.width = DEFAULT_PLAYER_WIDTH;
-	}
+	p.height = DEFAULT_PLAYER_HEIGHT;
+	p.width = DEFAULT_PLAYER_WIDTH;
 }
 
 function resetPlayerPowerUps(p) {
-	if (!twoPlayer) {
-		p.lasers = false;
-		if (p.twin) {
-			p.twin = false;
-			stage.removeChild(player.twinSprite);
-		}
+	p.lasers = false;
+	if (p.twin) {
+		p.twin = false;
+		stage.removeChild(player.twinSprite);
 	}
 
 	resetPlayerSize(p);
@@ -483,10 +438,10 @@ function updatePlayer(p) {
 	}
 
 	// SPACE
-	if (p.shootPressed()) {
+	if (spacePressed()) {
 		// shoot lasers if the player has them
-		if (p.canShootLaser()) {
-			p.shootLaser();
+		if (canShootLaser()) {
+			shootLaser();
 		}
 	}
 
@@ -545,19 +500,12 @@ function clearScreen() {
 	stage.removeChild(levelMessage);
 	stage.removeChild(obstacleMessage);
 	stage.removeChild(player);
-	if (twoPlayer) {
-		stage.removeChild(player2);
-	}
 
 	removePowerUpObjects();
 }
 
 function removeLifeSprite() {
 	lifeSprites.pop();
-}
-
-function removeLifeSpritep2() {
-	p2lifeSprites.pop();
 }
 
 function removeObstacle(obstacle) {
@@ -620,14 +568,6 @@ function decrementLifeCount() {
 	updateInfoBar();
 }
 
-function decrementLifeCountp2() {
-	p2lives--;
-
-	// remove life sprite and render
-	removeLifeSpritep2();
-	updateInfoBar();
-}
-
 function incrementObstaclesPassed() {
 	obstaclesPassed++;
 	updateObstacleMessage();
@@ -655,23 +595,16 @@ function spawnObstacle() {
 	// if the game ends, but set timeout is still going to call this function
 	// we want to ignore it so obstacles aren't added after the game ends
 	if (canSpawnObstacle()) {
-		console.log("spawning obstacle");
+		// creates and adds an obstacle to the screen
 		createObstacle();
+		obstaclesSpawned++;
 
-		if (twoPlayer) {
-			// consistent spawn time for two player
-			setTimeout(spawnObstacle, 400);
-		} else {
-			// creates and adds an obstacle to the screen
-			obstaclesSpawned++;
+		// tries random number to see if a power up should be spawned
+		trySpawnPowerUp();
 
-			// tries random number to see if a power up should be spawned
-			trySpawnPowerUp();
-
-			// spawns another obstacle in a random time
-			let t = randomSpawnTime();
-			setTimeout(spawnObstacle, t);
-		}
+		// spawns another obstacle in a random time
+		let t = randomSpawnTime();
+		setTimeout(spawnObstacle, t);
 	}
 }
 
@@ -732,14 +665,10 @@ function randomSpawnTime() {
 }
 
 function canSpawnObstacle() {
-	if (twoPlayer) {
-		return !gameOver;
-	} else {
-		return !gameOver 
-			&& !recentlyLostLife 
-			&& !recentlyCompletedLevel 
-			&& obstaclesSpawned < levelObstacles[level];
-	}
+	return !gameOver 
+		&& !recentlyLostLife 
+		&& !recentlyCompletedLevel 
+		&& obstaclesSpawned < levelObstacles[level];
 }
 /* -------------- END rendering -------------- */
 
@@ -882,24 +811,6 @@ function playerCircleCollision(p, o) {
 		|| hitTestRectCircle(horizontalHitbox, obstacleHitbox);
 }
 
-function playerRectangleCollision(p, r) {
-	let verticalHitbox = {
-		height : p.height,
-		width : p.width / 3,
-		x : p.x + p.width / 3,
-		y : p.y
-	};
-
-	let horizontalHitbox = {
-		height : p.height / 3,
-		width : p.width,
-		x : p.x,
-		y : p.y + p.height * 2 / 3
-	};
-
-	return hitTestRectangle(verticalHitbox, r) || hitTestRectangle(horizontalHitbox, r);
-}
-
 function obstacleCollision(obstacle) {
 	// player or its twin (if active) hit an obstacle
 	return playerCircleCollision(player, obstacle)
@@ -925,69 +836,11 @@ function checkObstacleBounds(obstacle) {
 function checkLaserBounds(laser) {
 	// laser hit an obstacle, we removed it
 	if (laserHitObstacle(laser)) {
-		if (!twoPlayer) {
-			incrementObstaclesPassed();
-		}
+		incrementObstaclesPassed();
 	} else if (laserOutOfRange(laser)) {
 		// left the screen, remove it
 		removeLaser(laser);
-	} 
-
-	if (twoPlayer) {
-		if (laserHitPlayer(laser)) {
-			resetPlayerValues(player);
-			decrementLifeCount();
-		} else if (laserHitPlayer2(laser)) {
-			resetPlayerValues(player2);
-			decrementLifeCountp2();
-		}
 	}
-}
-
-function laserHitPlayer(laser) {
-	let verticalHitbox = {
-		height : player.height,
-		width : player.width / 3,
-		x : player.x,
-		y : player.y
-	};
-
-	let horizontalHitbox = {
-		height : player.height / 3,
-		width : player.width,
-		x : player.x,
-		y : player.y + player.height * 1 / 3
-	};
-
-	if (hitTestRectangle(verticalHitbox, laser) || hitTestRectangle(horizontalHitbox, laser)) {
-		removeLaser(laser);
-		return true;
-	}
-
-	return false;
-}
-
-function laserHitPlayer2(laser) {
-	let verticalHitbox = {
-		height : player2.height,
-		width : player2.width / 3,
-		x : player2.x + player2.width * 2 / 3,
-		y : player2.y
-	};
-
-	let horizontalHitbox = {
-		height : player2.height / 3,
-		width : player2.width,
-		x : player2.x,
-		y : player2.y + player2.height * 1 / 3
-	};
-
-	if (hitTestRectangle(verticalHitbox, laser) || hitTestRectangle(horizontalHitbox, laser)) {
-		removeLaser(laser);
-		return true;
-	}
-
-	return false;
 }
 
 function laserHitObstacle(laser) {
@@ -1087,11 +940,7 @@ function doublePlayerSize() {
 }
 
 function laserOutOfRange(laser) {
-	if (twoPlayer) {
-		return (laser.x + laser.width < 0) || (laser.x - laser.width > renderer.width);
-	} else {
-		return laser.y + laser.height < SCREEN_TOP;
-	}
+	return laser.y + laser.height < SCREEN_TOP;
 }
 
 function objectOutOfRange(obstacle) {
@@ -1132,10 +981,7 @@ function createInfoBar() {
 
 function createInfoBarSprites() {
 	createLifeSprites();
-
-	if (!twoPlayer) {
-		createObstacleMessage();
-	}
+	createObstacleMessage();
 	//createLevelMessage();
 }
 
@@ -1143,9 +989,7 @@ function createLifeSprites() {
 	// adds 3 life sprites
 	let i;
 	for (i = 0; i < lives; i++) {
-		let lifeSprite;
-
-		lifeSprite = new Sprite(
+		let lifeSprite = new Sprite(
 			loader.resources["img/rocket.png"].texture
 		);
 
@@ -1161,38 +1005,12 @@ function createLifeSprites() {
 
 		stage.addChild(lifeSprite);
 	}
-
-	if (twoPlayer) {
-		for (i = 0; i < p2lives; i++) {
-			let lifeSprite = new Sprite(
-				loader.resources["img/rocket.png"].texture
-			);
-
-			lifeSprite.height = INFO_BAR_HEIGHT - BORDER_SIZE;
-			lifeSprite.width = lifeSprite.height * (600/872);
-
-			lifeSprite.x = renderer.width - ((i+1) * lifeSprite.width + i*BORDER_SIZE);
-			lifeSprite.y = SCREEN_BOTTOM + BORDER_SIZE;
-
-			lifeSprite.visible = true;
-
-			p2lifeSprites.push(lifeSprite);
-
-			stage.addChild(lifeSprite);
-		}
-	}
 }
 
 function createPlayer() {
-	if (twoPlayer) {
-		player = new Sprite(
-			loader.resources["img/rocket_right.png"].texture
-		);
-	} else {
-		player = new Sprite(
-			loader.resources["img/rocket.png"].texture
-		);	
-	}
+	player = new Sprite(
+		loader.resources["img/rocket.png"].texture
+	);
 
 	player.upPressed = function () {
 		return keyPressed[WCODE];
@@ -1210,36 +1028,6 @@ function createPlayer() {
 		return keyPressed[SCODE];
 	}
 
-	player.shootPressed = function() {
-		return keyPressed[SPACE];
-	}
-
-	player.canShootLaser = function() {
-		return player.lasers && !player.recentlyShotLaser;
-	}
-
-	player.shootLaser = function() {
-		if (twoPlayer) {
-			// small buffer to avoid player colliding with own laser
-			let x = player.x + player.width + 5;
-			let y = player.y + player.height * (4/10);
-			console.log("shooting laser at " + x + " and " + y);
-			spawnLaser(player, -1*LASER_SPEED, x, y);
-		} else {
-			let x = player.x + player.width * (2/5);
-			let y = player.y - player.height * (1/10);
-			spawnLaser(player, LASER_SPEED, x, y);
-		}
-
-		player.recentlyShotLaser = true;
-		setTimeout( function() { player.recentlyShotLaser = false; }, 300);
-	}
-
-	if (twoPlayer) {
-		player.lasers = true;
-	}
-	player.recentlyShotLaser = false;
-
 	player.twinSprite = createTwinSprite();
 
 	// puts player in the middle of the screen
@@ -1247,54 +1035,6 @@ function createPlayer() {
 
 	// add player to screen
 	stage.addChild(player);
-}
-
-function createPlayer2() {
-	player2 = new Sprite(
-		loader.resources["img/rocket_left.png"].texture
-	);
-
-	player2.upPressed = function () {
-		return keyPressed[UARROW];
-	}
-
-	player2.rightPressed = function() {
-		return keyPressed[RARROW];
-	}
-
-	player2.leftPressed = function() {
-		return keyPressed[LARROW];
-	}
-
-	player2.downPressed = function() {
-		return keyPressed[DARROW];
-	}
-
-	player2.shootPressed = function() {
-		return keyPressed[LCODE];
-	}
-
-	player2.canShootLaser = function() {
-		return !player2.recentlyShotLaser;
-	}
-
-	player2.shootLaser = function() {
-		// small buffer to avoid player colliding with own laser
-		let x = player2.x - player2.width/5 - 30;
-		let y = player2.y + player2.height * (4/10);
-		spawnLaser(player2, LASER_SPEED, x, y);
-		player2.recentlyShotLaser = true;
-		setTimeout( function() { player2.recentlyShotLaser = false; }, 300);
-	}
-
-	player2.lasers = true;
-	player2.recentlyShotLaser = false;
-
-	// puts player in the middle of the screen
-	resetPlayerValues(player2);
-
-	// add player to screen
-	stage.addChild(player2);
 }
 
 function createTwinSprite() {
@@ -1316,10 +1056,6 @@ function createTwinSprite() {
 
 	twin.downPressed = function() {
 		return keyPressed[DARROW];
-	}
-
-	twin.shootPressed = function() {
-		return keyPressed[SPACE];
 	}
 
 	// resets twin's values but puts it on top of player
@@ -1373,25 +1109,25 @@ function createObstacle() {
 	stage.addChild(obstacle);
 }
 
-function spawnLaser(p, speed, x, y) {
+// creates a laser object
+function shootLaser() {
 	// creates a laser object
 	let laser = new Graphics();
 
 	laser.beginFill(0xE74C3C);
-	laser.drawRect(0,0,p.width/5, p.height/10);
+	laser.drawRect(0,0,player.width/5, player.height/10);
 	laser.endFill();
 
-	laser.x = x;
-	laser.y = y;
+	laser.x = player.x + laser.width * 2;
+	laser.y = player.y - laser.height;
 
-	laser.speed = speed;
+	laser.speed = LASER_SPEED;
 	laser.move = function() {
-		if (twoPlayer) {
-			laser.x -= laser.speed;
-		} else {
-			laser.y -= laser.speed;
-		}
+		laser.y -= laser.speed;
 	}
+
+	recentlyShotLaser = true;
+	setTimeout( function() { recentlyShotLaser = false; }, 300);
 
 	lasers.push(laser);
 
@@ -1525,7 +1261,6 @@ function createStartButton() {
 	startButton.y = SCREEN_BOTTOM / 2;
 
 	startButton.release = () => {
-		twoPlayer = false;
 		startGame();
 	}
 
@@ -1554,8 +1289,6 @@ window.onkeydown = function(e) {
 loader
 	.add(["img/start_button.json",
 		  "img/rocket.png",
-		  "img/rocket_left.png",
-		  "img/rocket_right.png",
 		  "img/asteroid.png",
 		  "img/bg.png"])
 	.on("progress", loadProgressHandler)
