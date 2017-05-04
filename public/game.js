@@ -94,6 +94,7 @@ var RARROW = 39;
 var UARROW = 38;
 var DARROW = 40;
 var SPACE = 32;
+var SLASH = 191;
 
 // enum for powerup types
 var PowerUpType = {
@@ -125,8 +126,8 @@ var DEFAULT_PLAYER_HEIGHT = Math.floor(0.04802 * renderer.width) * (872/600);
 var DEFAULT_PLAYER_WIDTH = Math.floor(0.04802 * renderer.width);
 
 // obstacle movement
-var maxovel = [0, 5, 6, 6, 7, 7, 8, 8, 9, 10, 12];
-var minovel = [0, 4, 4, 3, 3, 3, 3, 3, 4, 5, 5];
+var maxovel = [5, 5, 6, 6, 7, 7, 8, 8, 9, 10, 12];
+var minovel = [4, 4, 4, 3, 3, 3, 3, 3, 4, 5, 5];
 
 // spawn rates
 //var minSpawnRate = [0, 200, 200, 200, 200, 150, 150, 150, 100, 100, 100];
@@ -618,6 +619,11 @@ function decrementLifeCount() {
 	// remove life sprite and render
 	removeLifeSprite();
 	updateInfoBar();
+
+	if (twoPlayer && lives === 0) {
+		createText("Player 2 wins!!")
+		gameOver = true;
+	}
 }
 
 function decrementLifeCountp2() {
@@ -626,6 +632,11 @@ function decrementLifeCountp2() {
 	// remove life sprite and render
 	removeLifeSpritep2();
 	updateInfoBar();
+
+	if (twoPlayer && p2lives === 0) {
+		createText("Player 1 wins!!");
+		gameOver = true;
+	}
 }
 
 function incrementObstaclesPassed() {
@@ -655,12 +666,11 @@ function spawnObstacle() {
 	// if the game ends, but set timeout is still going to call this function
 	// we want to ignore it so obstacles aren't added after the game ends
 	if (canSpawnObstacle()) {
-		console.log("spawning obstacle");
 		createObstacle();
 
 		if (twoPlayer) {
 			// consistent spawn time for two player
-			setTimeout(spawnObstacle, 400);
+			setTimeout(spawnObstacle, 1000);
 		} else {
 			// creates and adds an obstacle to the screen
 			obstaclesSpawned++;
@@ -722,7 +732,9 @@ function chooseSpawnLocationIndex() {
 function randomObstacleSpeed() {
 	let max = maxovel[level];
 	let min = minovel[level];
-	return Math.floor(Math.random() * (max-min+1)) + min;
+	let r = Math.floor(Math.random() * (max-min+1)) + min;
+	console.log("random speed "+r);
+	return r;
 }
 
 function randomSpawnTime() {
@@ -882,24 +894,6 @@ function playerCircleCollision(p, o) {
 		|| hitTestRectCircle(horizontalHitbox, obstacleHitbox);
 }
 
-function playerRectangleCollision(p, r) {
-	let verticalHitbox = {
-		height : p.height,
-		width : p.width / 3,
-		x : p.x + p.width / 3,
-		y : p.y
-	};
-
-	let horizontalHitbox = {
-		height : p.height / 3,
-		width : p.width,
-		x : p.x,
-		y : p.y + p.height * 2 / 3
-	};
-
-	return hitTestRectangle(verticalHitbox, r) || hitTestRectangle(horizontalHitbox, r);
-}
-
 function obstacleCollision(obstacle) {
 	// player or its twin (if active) hit an obstacle
 	return playerCircleCollision(player, obstacle)
@@ -907,18 +901,29 @@ function obstacleCollision(obstacle) {
 }
 
 function checkObstacleBounds(obstacle) {
-	// player hit the obstacle
-	if (obstacleCollision(obstacle)) {
-		loseLife();
-	} else if (objectOutOfRange(obstacle)) {
-		// obstacle has left the screen, remove it
-		removeObstacle(obstacle);
+	if (twoPlayer) {
+		if (obstacleHitPlayer(obstacle)) {
+			resetPlayerValues(player);
+			decrementLifeCount();
+		}
+		if (obstacleHitPlayer2(obstacle)) {
+			resetPlayerValues(player2);
+			decrementLifeCountp2();
+		}
+	} else {
+		// player hit the obstacle
+		if (obstacleCollision(obstacle)) {
+			loseLife();
+		} else if (objectOutOfRange(obstacle)) {
+			// obstacle has left the screen, remove it
+			removeObstacle(obstacle);
 
-		// update text
-		incrementObstaclesPassed();
+			// update text
+			incrementObstaclesPassed();
 
-		// checks if the level has been completed
-		checkCompletedLevel();
+			// checks if the level has been completed
+			checkCompletedLevel();
+		}
 	}
 }
 
@@ -942,6 +947,56 @@ function checkLaserBounds(laser) {
 			decrementLifeCountp2();
 		}
 	}
+}
+
+function obstacleHitPlayer(obstacle) {
+	let verticalHitbox = {
+		height : player.height,
+		width : player.width / 3,
+		x : player.x,
+		y : player.y
+	};
+
+	let horizontalHitbox = {
+		height : player.height / 3,
+		width : player.width,
+		x : player.x,
+		y : player.y + player.height * 1 / 3
+	};
+
+	let obstacleHitbox = {
+		x : obstacle.x,
+		y : obstacle.y,
+		radius : obstacle.radius
+	};
+
+	return hitTestRectCircle(verticalHitbox, obstacleHitbox) 
+		|| hitTestRectCircle(horizontalHitbox, obstacleHitbox);
+}
+
+function obstacleHitPlayer2(obstacle) {
+	let verticalHitbox = {
+		height : player2.height,
+		width : player2.width / 3,
+		x : player2.x + player2.width * 2 / 3,
+		y : player2.y
+	};
+
+	let horizontalHitbox = {
+		height : player2.height / 3,
+		width : player2.width,
+		x : player2.x,
+		y : player2.y + player2.height * 1 / 3
+	};
+
+	let obstacleHitbox = {
+		x : obstacle.x,
+		y : obstacle.y,
+		radius : obstacle.radius
+	};
+
+	return hitTestRectCircle(verticalHitbox, obstacleHitbox) 
+		|| hitTestRectCircle(horizontalHitbox, obstacleHitbox);
 }
 
 function laserHitPlayer(laser) {
@@ -1271,7 +1326,7 @@ function createPlayer2() {
 	}
 
 	player2.shootPressed = function() {
-		return keyPressed[LCODE];
+		return keyPressed[SLASH];
 	}
 
 	player2.canShootLaser = function() {
