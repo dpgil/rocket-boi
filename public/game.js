@@ -378,10 +378,11 @@ function restartLife() {
 }
 
 function resetPlayerValues(p) {
-	resetPlayerSize(p);
-	resetPlayerPosition(p);
-	resetPlayerVelocity(p);
-	resetPlayerPowerUps(p);
+	p.resetSize();
+	p.resetPosition();
+	p.resetVelocity();
+	p.resetPowerUps();
+	//resetPlayerPowerUps(p);
 }
 
 function resetPlayerPosition(p) {
@@ -958,10 +959,12 @@ function checkObstacleBounds(obstacle) {
 	if (twoPlayer) {
 		if (obstacleHitPlayer(obstacle)) {
 			resetPlayerValues(player);
+			player.x = renderer.width * (1/4);
 			decrementLifeCount();
 		}
 		if (obstacleHitPlayer2(obstacle)) {
 			resetPlayerValues(player2);
+			player2.x = renderer.width * (3/4);
 			decrementLifeCountp2();
 		}
 	} else {
@@ -1324,7 +1327,7 @@ function createPlayer() {
 	}
 
 	player.canShootLaser = function() {
-		return player.lasers && !player.recentlyShotLaser;
+		return player.lasers && !player.recentlyShotLaser && !gameOver;
 	}
 
 	player.shootLaser = function() {
@@ -1343,6 +1346,43 @@ function createPlayer() {
 		setTimeout( function() { player.recentlyShotLaser = false; }, 300);
 	}
 
+	player.resetPosition = function() {
+		if (twoPlayer) {
+			player.x = renderer.width * (1/4);
+		} else {
+			player.x = renderer.width / 2;
+		}
+
+		player.y = SCREEN_BOTTOM / 2;
+	}
+
+	player.resetVelocity = function() {
+		player.xv = 0;
+		player.yv = 0;
+	}
+
+	player.resetSize = function() {
+		if (twoPlayer) {
+			player.height = DEFAULT_PLAYER_WIDTH;
+			player.width = DEFAULT_PLAYER_HEIGHT;
+		} else {
+			player.height = DEFAULT_PLAYER_HEIGHT;
+			player.width = DEFAULT_PLAYER_WIDTH;
+		}
+	}
+
+	player.resetPowerUps = function() {
+		if (!twoPlayer) {
+			player.lasers = false;
+			if (player.twin) {
+				player.twin = false;
+				stage.removeChild(player.twinSprite);
+			}
+		}
+
+		player.resetSize();
+	}
+
 	if (twoPlayer) {
 		player.lasers = true;
 	}
@@ -1353,6 +1393,9 @@ function createPlayer() {
 	// turns off lasers and twin
 	//resetPlayerPowerUps(player);
 	resetPlayerValues(player);
+	if (twoPlayer) {
+		player.x = renderer.width * (1/4);
+	}
 
 	// add player to screen
 	stage.addChild(player);
@@ -1384,7 +1427,7 @@ function createPlayer2() {
 	}
 
 	player2.canShootLaser = function() {
-		return !player2.recentlyShotLaser;
+		return !player2.recentlyShotLaser && !gameOver;
 	}
 
 	player2.shootLaser = function() {
@@ -1392,8 +1435,28 @@ function createPlayer2() {
 		let x = player2.x - player2.width/5 - 30;
 		let y = player2.y + player2.height * (4/10);
 		spawnLaser(player2, LASER_SPEED, x, y);
+
 		player2.recentlyShotLaser = true;
 		setTimeout( function() { player2.recentlyShotLaser = false; }, 300);
+	}
+
+	player2.resetPosition = function() {
+		player2.x = renderer.width * (3/4);
+		player2.y = SCREEN_BOTTOM / 2;
+	}
+
+	player2.resetVelocity = function() {
+		player2.xv = 0;
+		player2.yv = 0;
+	}
+
+	player2.resetSize = function() {
+		player2.height = DEFAULT_PLAYER_WIDTH;
+		player2.width = DEFAULT_PLAYER_HEIGHT;
+	}
+
+	player2.resetPowerUps = function() {
+		player2.resetSize();
 	}
 
 	player2.lasers = true;
@@ -1401,6 +1464,7 @@ function createPlayer2() {
 
 	// puts player in the middle of the screen
 	resetPlayerValues(player2);
+	player2.x = renderer.width * (3/4);
 
 	// add player to screen
 	stage.addChild(player2);
@@ -1429,6 +1493,25 @@ function createTwinSprite() {
 
 	twin.shootPressed = function() {
 		return keyPressed[SPACE];
+	}
+
+	twin.resetPosition = function() {
+		twin.x = player.x;
+		twin.y = player.y;
+	}
+
+	twin.resetVelocity = function() {
+		twin.xv = 0;
+		twin.yv = 0;
+	}
+
+	twin.resetSize = function() {
+		twin.height = DEFAULT_PLAYER_HEIGHT;
+		twin.width = DEFAULT_PLAYER_WIDTH;
+	}
+
+	twin.resetPowerUps = function() {
+		twin.resetSize();
 	}
 
 	// resets twin's values but puts it on top of player
@@ -1692,32 +1775,6 @@ function create2PlayerButton() {
 
 	stage.addChild(twoPlayerButton);
 }
-
-// function createStartButton() {
-// 	let id = PIXI.loader.resources["img/start_button.json"].textures;
-
-// 	let buttonFrames = [
-//     	id[2],
-//     	id[1],
-//     	id[0]
-// 	];
-
-// 	startButton = t.button(buttonFrames);
-
-// 	startButton.height = Math.floor(0.15495 * SCREEN_BOTTOM);//150;
-// 	startButton.width = Math.floor(0.18007 * renderer.width);//300;
-// 	startButton.anchor.x = 0.5;
-// 	startButton.anchor.y = 0.5;
-// 	startButton.x = renderer.width / 2;
-// 	startButton.y = SCREEN_BOTTOM / 2;
-
-// 	startButton.release = () => {
-// 		twoPlayer = false;
-// 		startGame();
-// 	}
-
-// 	stage.addChild(startButton);
-// }
 
 function createMainMenuButtons() {
 	//createStartButton();
