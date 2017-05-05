@@ -201,6 +201,7 @@ function handleUserInput() {
 		}
 
 		updatePlayers();
+		updateMenu();
 	} else {
 		play();
 	}
@@ -251,6 +252,13 @@ function play() {
 			}
 		}
 	}
+}
+
+function updateMenu() {
+	// updates menu objects so the player flies under them
+	logo.parent.addChild(logo);
+	onePlayerButton.parent.addChild(onePlayerButton);
+	twoPlayerButton.parent.addChild(twoPlayerButton);
 }
 
 function updateScreenObjects() {
