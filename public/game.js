@@ -60,7 +60,8 @@ var mainMessage = "";
 // text sprite handling current level
 var levelMessage = "";
 // text sprite handling obstacle count
-var obstacleMessage = "";
+var obstacleMessage;
+var obstacleMessageLogo;
 // list of obstacles blocking the player
 var obstacles = [];
 // list of locations obstacles can spawn
@@ -225,9 +226,6 @@ function startGame() {
 		createPlayer2();
 	}
 
-	// adds or updates the life and level message sprites
-	//createMessageSprites();
-
 	// begins spawning obstacles in 1 sec
 	setTimeout(spawnObstacle, 1000);
 }
@@ -303,6 +301,7 @@ function updateInfoBar() {
 		});
 	} else {
 		obstacleMessage.parent.addChild(obstacleMessage);
+		obstacleMessageLogo.parent.addChild(obstacleMessageLogo);
 	}
 
 	//levelMessage.parent.addChild(levelMessage);
@@ -575,6 +574,7 @@ function clearScreen() {
 	stage.removeChild(logo);
 	stage.removeChild(levelMessage);
 	stage.removeChild(obstacleMessage);
+	stage.removeChild(obstacleMessageLogo);
 	stage.removeChild(player);
 	if (twoPlayer) {
 		stage.removeChild(player2);
@@ -1579,14 +1579,24 @@ function createObstacleMessage() {
 	);
 
 	// set text position
-	obstacleMessage.x = lifeSprites[2].x + lifeSprites[2].width + BORDER_SIZE*3;//BORDER_SIZE;
+	obstacleMessage.x = lifeSprites[2].x + lifeSprites[2].width + BORDER_SIZE*6;//BORDER_SIZE;
 	obstacleMessage.y = SCREEN_BOTTOM + BORDER_SIZE;//levelMessage.y + levelMessage.height + BORDER_SIZE;
 	obstacleMessage.height = lifeSprites[2].height;
 	obstacleMessage.width = obstacleMessage.height * 1.6;
 
-
-	// add to the stage
+	// add it to the stage
 	stage.addChild(obstacleMessage);
+
+	// asteroid picture next to obstacle count
+	obstacleMessageLogo = new Sprite(
+		loader.resources["img/asteroid.png"].texture
+	);
+	obstacleMessageLogo.x = obstacleMessage.x + obstacleMessage.width + BORDER_SIZE;
+	obstacleMessageLogo.y = SCREEN_BOTTOM + BORDER_SIZE;
+	obstacleMessageLogo.height = obstacleMessage.height * 0.9;
+	obstacleMessageLogo.width = obstacleMessage.height;
+
+	stage.addChild(obstacleMessageLogo);
 }
 
 function createLogo() {
@@ -1654,31 +1664,31 @@ function create2PlayerButton() {
 	stage.addChild(twoPlayerButton);
 }
 
-function createStartButton() {
-	let id = PIXI.loader.resources["img/start_button.json"].textures;
+// function createStartButton() {
+// 	let id = PIXI.loader.resources["img/start_button.json"].textures;
 
-	let buttonFrames = [
-    	id[2],
-    	id[1],
-    	id[0]
-	];
+// 	let buttonFrames = [
+//     	id[2],
+//     	id[1],
+//     	id[0]
+// 	];
 
-	startButton = t.button(buttonFrames);
+// 	startButton = t.button(buttonFrames);
 
-	startButton.height = Math.floor(0.15495 * SCREEN_BOTTOM);//150;
-	startButton.width = Math.floor(0.18007 * renderer.width);//300;
-	startButton.anchor.x = 0.5;
-	startButton.anchor.y = 0.5;
-	startButton.x = renderer.width / 2;
-	startButton.y = SCREEN_BOTTOM / 2;
+// 	startButton.height = Math.floor(0.15495 * SCREEN_BOTTOM);//150;
+// 	startButton.width = Math.floor(0.18007 * renderer.width);//300;
+// 	startButton.anchor.x = 0.5;
+// 	startButton.anchor.y = 0.5;
+// 	startButton.x = renderer.width / 2;
+// 	startButton.y = SCREEN_BOTTOM / 2;
 
-	startButton.release = () => {
-		twoPlayer = false;
-		startGame();
-	}
+// 	startButton.release = () => {
+// 		twoPlayer = false;
+// 		startGame();
+// 	}
 
-	stage.addChild(startButton);
-}
+// 	stage.addChild(startButton);
+// }
 
 function createMainMenuButtons() {
 	//createStartButton();
