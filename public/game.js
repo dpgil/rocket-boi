@@ -208,6 +208,16 @@ function handleUserInput() {
 	}
 }
 
+function start1Player() {
+	twoPlayer = false;
+	startGame();
+}
+
+function start2Player() {
+	twoPlayer = true;
+	startGame();
+}
+
 function startGame() {
 	console.log("Starting game at level 1");
 
@@ -254,9 +264,11 @@ function play() {
 
 function updateMenu() {
 	// updates menu objects so the player flies under them
-	logo.parent.addChild(logo);
-	onePlayerButton.parent.addChild(onePlayerButton);
-	twoPlayerButton.parent.addChild(twoPlayerButton);
+	if (logo.parent) {
+		logo.parent.addChild(logo);
+		onePlayerButton.parent.addChild(onePlayerButton);
+		twoPlayerButton.parent.addChild(twoPlayerButton);
+	}
 }
 
 function updateScreenObjects() {
@@ -292,12 +304,16 @@ function updateInfoBar() {
 	infoBar.parent.addChild(infoBar);
 
 	lifeSprites.forEach(function(lifeSprite) {
-		lifeSprite.parent.addChild(lifeSprite);
+		if (lifeSprite.parent) {
+			lifeSprite.parent.addChild(lifeSprite);
+		}
 	});
 
 	if (twoPlayer) {
 		p2lifeSprites.forEach(function(lifeSprite) {
-			lifeSprite.parent.addChild(lifeSprite);
+			if (lifeSprite.parent) {
+				lifeSprite.parent.addChild(lifeSprite);
+			}
 		});
 	} else {
 		obstacleMessage.parent.addChild(obstacleMessage);
@@ -565,13 +581,14 @@ function clearScreen() {
 	onePlayerButton.y = -500;
 	twoPlayerButton.x = -500;
 	twoPlayerButton.y = -500;
+	logo.x = -500;
+	logo.y = -500;
 
 	// remove message and player
 	stage.removeChild(mainMessage);
 	//stage.removeChild(startButton);
-	stage.removeChild(onePlayerButton);
-	stage.removeChild(twoPlayerButton);
-	stage.removeChild(logo);
+	//stage.removeChild(onePlayerButton);
+	//stage.removeChild(twoPlayerButton);
 	stage.removeChild(levelMessage);
 	stage.removeChild(obstacleMessage);
 	stage.removeChild(obstacleMessageLogo);
@@ -579,6 +596,13 @@ function clearScreen() {
 	if (twoPlayer) {
 		stage.removeChild(player2);
 	}
+
+	lifeSprites.forEach(function(lifeSprite) {
+		stage.removeChild(lifeSprite);
+	});
+	p2lifeSprites.forEach(function(lifeSprite) {
+		stage.removeChild(lifeSprite);
+	});
 
 	removePowerUpObjects();
 }
@@ -651,7 +675,8 @@ function decrementLifeCount() {
 	updateInfoBar();
 
 	if (twoPlayer && lives === 0) {
-		createText("Player 2 wins!!")
+
+		createText("Player 2 wins!!");
 		gameOver = true;
 	}
 }
@@ -1325,7 +1350,8 @@ function createPlayer() {
 
 	player.twinSprite = createTwinSprite();
 
-	// puts player in the middle of the screen
+	// turns off lasers and twin
+	//resetPlayerPowerUps(player);
 	resetPlayerValues(player);
 
 	// add player to screen
@@ -1631,8 +1657,7 @@ function create1PlayerButton() {
 	onePlayerButton.y = SCREEN_BOTTOM * (4 / 5);
 
 	onePlayerButton.release = () => {
-		twoPlayer = false;
-		startGame();
+		start1Player();
 	}
 
 	stage.addChild(onePlayerButton);
@@ -1657,8 +1682,7 @@ function create2PlayerButton() {
 	twoPlayerButton.y = SCREEN_BOTTOM * (4 / 5);
 
 	twoPlayerButton.release = () => {
-		twoPlayer = true;
-		startGame();
+		start2Player();
 	}
 
 	stage.addChild(twoPlayerButton);
