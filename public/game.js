@@ -32,7 +32,7 @@ var t = new Tink(PIXI, renderer.view);
 // keeps track of the game state
 var gameOver = true;
 // keeps track of game version
-var twoPlayer;
+var twoPlayer = false;
 // current level
 var level = 0;
 // lives left
@@ -49,6 +49,10 @@ var player2;
 var far;
 // main menu start button
 var startButton;
+
+var onePlayerButton;
+var twoPlayerButton;
+var logo;
 // information bar
 var infoBar;
 // text sprite displayed to the user
@@ -156,6 +160,10 @@ function setup() {
 	// calculates locations the obstacles can spawn
 	constructSpawnLocations();
 
+	// creates player sprite so user can control rocket
+	// while waiting to start the game
+	createPlayer();
+
 	// kick off game loop
 	gameLoop();
 	//setInterval(gameLoop, 10);
@@ -167,6 +175,7 @@ function gameLoop() {
 
 	// handles user input
 	handleUserInput();
+	//play();
 
 	// update tink for button
 	// could improve render speed by not updating tink when no button is displayed
@@ -179,14 +188,19 @@ function gameLoop() {
 function handleUserInput() {
 	if (gameOver) {
 		// start the game over
+		// if (spacePressed()) {
+		// 	// start level 1
+		// 	twoPlayer = false;
+		// 	startGame();
+		// } else if (keyPressed[WCODE]) {
+		// 	twoPlayer = true;
+		// 	startGame();
+		// }	
 		if (spacePressed()) {
-			// start level 1
-			twoPlayer = false;
 			startGame();
-		} else if (keyPressed[WCODE]) {
-			twoPlayer = true;
-			startGame();
-		}	
+		}
+
+		updatePlayers();
 	} else {
 		play();
 	}
@@ -537,12 +551,20 @@ function updateLasers() {
 function clearScreen() {
 	// even after removing from screen, the button still is clickable
 	// for now, move it completely off the screen
-	startButton.x = -500;
-	startButton.y = -500;
+	//startButton.x = -500;
+	//startButton.y = -500;
+
+	onePlayerButton.x = -500;
+	onePlayerButton.y = -500;
+	twoPlayerButton.x = -500;
+	twoPlayerButton.y = -500;
 
 	// remove message and player
 	stage.removeChild(mainMessage);
-	stage.removeChild(startButton);
+	//stage.removeChild(startButton);
+	stage.removeChild(onePlayerButton);
+	stage.removeChild(twoPlayerButton);
+	stage.removeChild(logo);
 	stage.removeChild(levelMessage);
 	stage.removeChild(obstacleMessage);
 	stage.removeChild(player);
@@ -733,7 +755,6 @@ function randomObstacleSpeed() {
 	let max = maxovel[level];
 	let min = minovel[level];
 	let r = Math.floor(Math.random() * (max-min+1)) + min;
-	console.log("random speed "+r);
 	return r;
 }
 
@@ -1278,7 +1299,6 @@ function createPlayer() {
 			// small buffer to avoid player colliding with own laser
 			let x = player.x + player.width + 5;
 			let y = player.y + player.height * (4/10);
-			console.log("shooting laser at " + x + " and " + y);
 			spawnLaser(player, -1*LASER_SPEED, x, y);
 		} else {
 			let x = player.x + player.width * (2/5);
@@ -1561,6 +1581,71 @@ function createObstacleMessage() {
 	stage.addChild(obstacleMessage);
 }
 
+function createLogo() {
+	logo = new Sprite(
+		loader.resources["img/rocketboi.png"].texture
+	);
+
+	logo.anchor.x = 0.5;
+	logo.anchor.y = 0.5;
+	logo.x = renderer.width / 2;
+	logo.y = SCREEN_BOTTOM * (2 / 5);
+
+	stage.addChild(logo);
+}
+
+function create1PlayerButton() {
+	let up = PIXI.loader.resources["img/one_player_up.png"].texture;
+	let down = PIXI.loader.resources["img/one_player_down.png"].texture;
+
+	let buttonFrames = [
+    	up,
+    	down
+	];
+
+	onePlayerButton = t.button(buttonFrames);
+
+	onePlayerButton.height = Math.floor(0.15495 * SCREEN_BOTTOM);//150;
+	onePlayerButton.width = Math.floor(0.18007 * renderer.width);//300;
+	onePlayerButton.anchor.x = 0.5;
+	onePlayerButton.anchor.y = 0.5;
+	onePlayerButton.x = renderer.width / 2 - (onePlayerButton.width / 2 + 20); // 20 is small buffer
+	onePlayerButton.y = SCREEN_BOTTOM * (4 / 5);
+
+	onePlayerButton.release = () => {
+		twoPlayer = false;
+		startGame();
+	}
+
+	stage.addChild(onePlayerButton);
+}
+
+function create2PlayerButton() {
+	let up = PIXI.loader.resources["img/two_players_up.png"].texture;
+	let down = PIXI.loader.resources["img/two_players_down.png"].texture;
+
+	let buttonFrames = [
+    	up,
+    	down
+	];
+
+	twoPlayerButton = t.button(buttonFrames);
+
+	twoPlayerButton.height = Math.floor(0.15495 * SCREEN_BOTTOM);//150;
+	twoPlayerButton.width = Math.floor(0.18007 * renderer.width);//300;
+	twoPlayerButton.anchor.x = 0.5;
+	twoPlayerButton.anchor.y = 0.5;
+	twoPlayerButton.x = renderer.width / 2 + (twoPlayerButton.width / 2 + 20); // 20 is small buffer
+	twoPlayerButton.y = SCREEN_BOTTOM * (4 / 5);
+
+	twoPlayerButton.release = () => {
+		twoPlayer = true;
+		startGame();
+	}
+
+	stage.addChild(twoPlayerButton);
+}
+
 function createStartButton() {
 	let id = PIXI.loader.resources["img/start_button.json"].textures;
 
@@ -1588,7 +1673,10 @@ function createStartButton() {
 }
 
 function createMainMenuButtons() {
-	createStartButton();	
+	//createStartButton();
+	createLogo();	
+	create1PlayerButton();
+	create2PlayerButton();
 }
 /* -------------- END constructors -------------- */
 
@@ -1611,6 +1699,11 @@ loader
 		  "img/rocket.png",
 		  "img/rocket_left.png",
 		  "img/rocket_right.png",
+		  "img/one_player_up.png",
+		  "img/one_player_down.png",
+		  "img/two_players_up.png",
+		  "img/two_players_down.png",
+		  "img/rocketboi.png",
 		  "img/asteroid.png",
 		  "img/bg.png"])
 	.on("progress", loadProgressHandler)
