@@ -1641,9 +1641,11 @@ function createLogo() {
 function create1PlayerButton() {
 	let up = PIXI.loader.resources["img/one_player_up.png"].texture;
 	let down = PIXI.loader.resources["img/one_player_down.png"].texture;
+	let over = PIXI.loader.resources["img/one_player_over.png"].texture;
 
 	let buttonFrames = [
     	up,
+    	over,
     	down
 	];
 
@@ -1666,9 +1668,12 @@ function create1PlayerButton() {
 function create2PlayerButton() {
 	let up = PIXI.loader.resources["img/two_players_up.png"].texture;
 	let down = PIXI.loader.resources["img/two_players_down.png"].texture;
+	let over = PIXI.loader.resources["img/two_players_over.png"].texture;
+
 
 	let buttonFrames = [
     	up,
+    	over,
     	down
 	];
 
@@ -1743,8 +1748,10 @@ loader
 		  "img/rocket_right.png",
 		  "img/one_player_up.png",
 		  "img/one_player_down.png",
+		  "img/one_player_over.png",
 		  "img/two_players_up.png",
 		  "img/two_players_down.png",
+		  "img/two_players_over.png",
 		  "img/rocketboi.png",
 		  "img/asteroid.png",
 		  "img/bg.png"])
