@@ -22,8 +22,11 @@ var stage = new Container();
 // add canvas to the html
 document.body.appendChild(renderer.view);
 
-// setup tink for buttons and collision(TODO collision)
+// setup tink for buttons
 var t = new Tink(PIXI, renderer.view);
+
+// setup bump for collision
+var b = new Bump(PIXI);
 /* -------------- END sets up stage and game rendering -------------- */
 
 
@@ -235,6 +238,8 @@ function startGame() {
 	if (twoPlayer) {
 		createPlayer2();
 	}
+
+	//showPlayerHitboxes();
 
 	// begins spawning obstacles in 1 sec
 	setTimeout(spawnObstacle, 1000);
@@ -842,57 +847,6 @@ function hitTestRectCircle(r, c) {
 
 }
 
-function hitTestRectangle(r1, r2) {
-
-  //Define the variables we'll need to calculate
-  var hit, combinedHalfWidths, combinedHalfHeights, vx, vy;
-
-  //hit will determine whether there's a collision
-  hit = false;
-
-  //Find the center points of each sprite
-  r1.centerX = r1.x;// + r1.width / 2;
-  r1.centerY = r1.y;// + r1.height / 2;
-  r2.centerX = r2.x;// + r2.width / 2;
-  r2.centerY = r2.y;// + r2.height / 2;
-
-  //Find the half-widths and half-heights of each sprite
-  r1.halfWidth = r1.width / 2;
-  r1.halfHeight = r1.height / 2;
-  r2.halfWidth = r2.width / 2;
-  r2.halfHeight = r2.height / 2;
-
-  //Calculate the distance vector between the sprites
-  vx = r1.centerX - r2.centerX;
-  vy = r1.centerY - r2.centerY;
-
-  //Figure out the combined half-widths and half-heights
-  combinedHalfWidths = r1.halfWidth + r2.halfWidth;
-  combinedHalfHeights = r1.halfHeight + r2.halfHeight;
-
-  //Check for a collision on the x axis
-  if (Math.abs(vx) < combinedHalfWidths) {
-
-    //A collision might be occuring. Check for a collision on the y axis
-    if (Math.abs(vy) < combinedHalfHeights) {
-
-      //There's definitely a collision happening
-      hit = true;
-    } else {
-
-      //There's no collision on the y axis
-      hit = false;
-    }
-  } else {
-
-    //There's no collision on the x axis
-    hit = false;
-  }
-
-  //`hit` will be either `true` or `false`
-  return hit;
-};
-
 function maintainBounds(p) {
 	// keeps player inside the game screen. resets its velocity if it hits a wall
 
@@ -1071,13 +1025,71 @@ function laserHitPlayer(laser) {
 		y : player.y + player.height * 1 / 3
 	};
 
-	if (hitTestRectangle(verticalHitbox, laser) || hitTestRectangle(horizontalHitbox, laser)) {
+	if (b.hitTestRectangle(verticalHitbox, laser) || b.hitTestRectangle(horizontalHitbox, laser)) {
 		removeLaser(laser);
 		return true;
 	}
 
 	return false;
 }
+
+// function showPlayerHitboxes() {
+// 	let verticalHitbox1 = {
+// 		height : player.height,
+// 		width : player.width / 3,
+// 		x : player.x,
+// 		y : player.y
+// 	};
+
+// 	let horizontalHitbox1 = {
+// 		height : player.height / 3,
+// 		width : player.width,
+// 		x : player.x,
+// 		y : player.y + player.height * 1 / 3
+// 	};
+
+// 	// creates the graphics object
+// 	var hitbox1 = new Graphics();
+// 	// sets its values
+// 	hitbox1.beginFill(0xFF0000);
+// 	hitbox1.drawRect(verticalHitbox1.x,verticalHitbox1.y,verticalHitbox1.width,verticalHitbox1.height);
+// 	hitbox1.endFill();
+// 	stage.addChild(hitbox1);
+
+// 	var hitbox2 = new Graphics();
+// 	hitbox2.beginFill(0xFFFF00);
+// 	hitbox2.drawRect(horizontalHitbox1.x, horizontalHitbox1.y, horizontalHitbox1.width, horizontalHitbox1.height);
+// 	hitbox2.endFill();
+// 	stage.addChild(hitbox2);
+
+// 	let verticalHitbox2 = {
+// 		height : player2.height,
+// 		width : player2.width / 3,
+// 		x : player2.x + player2.width * 2 / 3,
+// 		y : player2.y
+// 	};
+
+// 	let horizontalHitbox2 = {
+// 		height : player2.height / 3,
+// 		width : player2.width,
+// 		x : player2.x,
+// 		y : player2.y + player2.height * 1 / 3
+// 	};
+
+// 	// creates the graphics object
+// 	var hitbox3 = new Graphics();
+// 	// sets its values
+// 	hitbox3.beginFill(0xFF0000);
+// 	hitbox3.drawRect(verticalHitbox2.x,verticalHitbox2.y,verticalHitbox2.width,verticalHitbox2.height);
+// 	hitbox3.endFill();
+// 	stage.addChild(hitbox3);
+
+// 	var hitbox4 = new Graphics();
+// 	hitbox4.beginFill(0xFFFF00);
+// 	hitbox4.drawRect(horizontalHitbox2.x, horizontalHitbox2.y, horizontalHitbox2.width, horizontalHitbox2.height);
+// 	hitbox4.endFill();
+// 	stage.addChild(hitbox4);
+// }
 
 function laserHitPlayer2(laser) {
 	let verticalHitbox = {
@@ -1094,7 +1106,7 @@ function laserHitPlayer2(laser) {
 		y : player2.y + player2.height * 1 / 3
 	};
 
-	if (hitTestRectangle(verticalHitbox, laser) || hitTestRectangle(horizontalHitbox, laser)) {
+	if (b.hitTestRectangle(verticalHitbox, laser) || b.hitTestRectangle(horizontalHitbox, laser)) {
 		removeLaser(laser);
 		return true;
 	}
