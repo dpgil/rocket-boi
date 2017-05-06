@@ -50,13 +50,12 @@ var player;
 var player2;
 // panning background
 var far;
-// main menu start button
-var startButton;
-
+// main screen buttons
 var onePlayerButton;
 var twoPlayerButton;
+// main screen logo
 var logo;
-// information bar
+// information bar during 1p gameplay
 var infoBar;
 // text sprite displayed to the user
 var mainMessage = "";
@@ -64,6 +63,7 @@ var mainMessage = "";
 var levelMessage = "";
 // text sprite handling obstacle count
 var obstacleMessage;
+// picture of asteroid next to obstacle count
 var obstacleMessageLogo;
 // list of obstacles blocking the player
 var obstacles = [];
@@ -138,8 +138,6 @@ var maxovel = [5, 5, 6, 6, 7, 7, 8, 8, 9, 10, 12];
 var minovel = [4, 4, 4, 3, 3, 3, 3, 3, 4, 5, 5];
 
 // spawn rates
-//var minSpawnRate = [0, 200, 200, 200, 200, 150, 150, 150, 100, 100, 100];
-//var maxSpawnRate = [0, 700, 700, 600, 600, 600, 600, 500, 500, 500, 500];
 var minSpawnRate = [0, 400, 350, 300, 250, 200, 200, 150, 150, 100, 100];
 var maxSpawnRate = [0, 1000, 900, 700, 700, 650, 650, 600, 600, 550, 500];
 
@@ -191,15 +189,6 @@ function gameLoop() {
 
 function handleUserInput() {
 	if (gameOver) {
-		// start the game over
-		// if (spacePressed()) {
-		// 	// start level 1
-		// 	twoPlayer = false;
-		// 	startGame();
-		// } else if (keyPressed[WCODE]) {
-		// 	twoPlayer = true;
-		// 	startGame();
-		// }	
 		if (spacePressed()) {
 			startGame();
 		}
@@ -239,8 +228,6 @@ function startGame() {
 		createPlayer2();
 	}
 
-	//showPlayerHitboxes();
-
 	// begins spawning obstacles in 1 sec
 	setTimeout(spawnObstacle, 1000);
 }
@@ -268,7 +255,7 @@ function play() {
 }
 
 function updateMenu() {
-	// updates menu objects so the player flies under them
+	// continually updates menu objects so the player flies under them
 	if (logo.parent) {
 		logo.parent.addChild(logo);
 		onePlayerButton.parent.addChild(onePlayerButton);
@@ -324,8 +311,6 @@ function updateInfoBar() {
 		obstacleMessage.parent.addChild(obstacleMessage);
 		obstacleMessageLogo.parent.addChild(obstacleMessageLogo);
 	}
-
-	//levelMessage.parent.addChild(levelMessage);
 }
 
 function resetGameState() {
@@ -387,40 +372,6 @@ function resetPlayerValues(p) {
 	p.resetPosition();
 	p.resetVelocity();
 	p.resetPowerUps();
-	//resetPlayerPowerUps(p);
-}
-
-function resetPlayerPosition(p) {
-	// centers player since the x,y are in the top left corner
-	p.x = renderer.width / 2 - p.width / 2;
-	p.y = SCREEN_BOTTOM / 2 - p.height / 2;
-}
-
-function resetPlayerVelocity(p) {
-	p.xv = 0;
-	p.yv = 0;
-}
-
-function resetPlayerSize(p) {
-	if (twoPlayer) {
-		p.height = DEFAULT_PLAYER_WIDTH;
-		p.width = DEFAULT_PLAYER_HEIGHT;
-	} else {
-		p.height = DEFAULT_PLAYER_HEIGHT;
-		p.width = DEFAULT_PLAYER_WIDTH;
-	}
-}
-
-function resetPlayerPowerUps(p) {
-	if (!twoPlayer) {
-		p.lasers = false;
-		if (p.twin) {
-			p.twin = false;
-			stage.removeChild(player.twinSprite);
-		}
-	}
-
-	resetPlayerSize(p);
 }
 
 function nextLevel() {
@@ -448,7 +399,7 @@ function checkCompletedLevel() {
 		recentlyCompletedLevel = true;
 
 		// takes away all power ups from player
-		resetPlayerPowerUps(player);
+		player.resetPowerUps();
 
 		createText("Level "+level+" complete! Press space to advance to the next level");
 	}
@@ -758,7 +709,6 @@ function trySpawnPowerUp() {
 }
 
 function choosePowerUpType() {
-	//return 3;
 	return Math.floor(Math.random() * NUM_POWERUPS);
 }
 
@@ -1198,9 +1148,6 @@ function addTwin() {
 }
 
 function halfPlayerSize() {
-	// temporarily sets player anchor to center
-	// so the size change is centered, then resets
-	// TODO NOT SURE IF THIS ACTUALLY HELPS --------------------------------
 	player.height = player.height / 2;
 	player.width = player.width / 2;
 }
@@ -1403,7 +1350,6 @@ function createPlayer() {
 	player.twinSprite = createTwinSprite();
 
 	// turns off lasers and twin
-	//resetPlayerPowerUps(player);
 	resetPlayerValues(player);
 	if (twoPlayer) {
 		player.x = renderer.width * (1/4);
@@ -1734,9 +1680,9 @@ function createLogo() {
 }
 
 function create1PlayerButton() {
-	let up = PIXI.loader.resources["img/one_player_up.png"].texture;
-	let down = PIXI.loader.resources["img/one_player_down.png"].texture;
-	let over = PIXI.loader.resources["img/one_player_over.png"].texture;
+	let up = loader.resources["img/one_player_up.png"].texture;
+	let down = loader.resources["img/one_player_down.png"].texture;
+	let over = loader.resources["img/one_player_over.png"].texture;
 
 	let buttonFrames = [
     	up,
@@ -1761,9 +1707,9 @@ function create1PlayerButton() {
 }
 
 function create2PlayerButton() {
-	let up = PIXI.loader.resources["img/two_players_up.png"].texture;
-	let down = PIXI.loader.resources["img/two_players_down.png"].texture;
-	let over = PIXI.loader.resources["img/two_players_over.png"].texture;
+	let up = loader.resources["img/two_players_up.png"].texture;
+	let down = loader.resources["img/two_players_down.png"].texture;
+	let over = loader.resources["img/two_players_over.png"].texture;
 
 
 	let buttonFrames = [
