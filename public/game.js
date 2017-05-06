@@ -1309,10 +1309,10 @@ function createPlayer() {
 		if (twoPlayer) {
 			player.x = renderer.width * (1/4);
 		} else {
-			player.x = renderer.width / 2;
+			player.x = renderer.width / 2 - player.width / 2;
 		}
 
-		player.y = SCREEN_BOTTOM / 2;
+		player.y = SCREEN_BOTTOM / 2 - player.height / 2;
 	}
 
 	player.resetVelocity = function() {
